@@ -1,11 +1,49 @@
 # Git Log - blindr
 
-Generated on: 2025-07-25 18:23:31
+Generated on: 2025-07-25 18:49:02
 Directory: /home/travis/blindr
 
-## Last 5 Commits
+## Last 6 Commits
 
-### 1. Commit: 38f0402e
+### 1. Commit: d9966f4a
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 18:23:45 -0400
+- **Subject:** Simplify UserPromptSubmit hook - Remove roadmap auto-injection
+
+**Full Commit Message:**
+```
+Simplify UserPromptSubmit hook - Remove roadmap auto-injection
+
+🧹 HOOK SYSTEM CLEANUP
+
+Removed automatic roadmap progress injection from session startup.
+Claude now receives only recent git history as context, making sessions
+cleaner and more focused.
+
+## Changes:
+✅ UserPromptSubmit hook now provides only git history context
+✅ Roadmap context removed from automatic injection
+✅ User manages their own input about what to work on
+✅ Claude focuses on updating roadmap progress as tasks complete
+
+## Benefits:
+- Cleaner session startup with relevant context only
+- Less noise and information overload
+- User-controlled development focus
+- Claude still has roadmap_tracker.py available when needed
+
+The hook system is now more focused and user-friendly while maintaining
+all tracking capabilities.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 38f0402e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:19:00 -0400
@@ -58,7 +96,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 1beccc47
+### 3. Commit: 1beccc47
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:15:32 -0400
@@ -77,7 +115,7 @@ Ready to begin Phase 1 development: 0/10 tasks completed.
 
 ---
 
-### 3. Commit: 2af29f47
+### 4. Commit: 2af29f47
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:15:20 -0400
@@ -133,7 +171,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: 9d636c73
+### 5. Commit: 9d636c73
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:10:55 -0400
@@ -159,7 +197,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 5. Commit: 908a71b9
+### 6. Commit: 908a71b9
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 17:46:00 -0400

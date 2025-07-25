@@ -1,12 +1,48 @@
 {
   "hooks": {
-    "UserPromptSubmit": ".claude/provide_context.py",
-    "PreToolUse": {
-      "Write|Edit|MultiEdit": ".claude/check_documentation.py"
-    },
-    "PostToolUse": {
-      "Edit|Write": "echo 'Consider updating roadmap progress if tasks were completed'"
-    },
-    "Stop": ".claude/check_phase_completion.py"
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/provide_context.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/check_documentation.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Consider updating roadmap progress if tasks were completed'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/check_phase_completion.py"
+          }
+        ]
+      }
+    ]
   }
 }
