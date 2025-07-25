@@ -1,6 +1,9 @@
 {
   "hooks": {
     "UserPromptSubmit": ".claude/provide_context.py",
+    "PreToolUse": {
+      "Write|Edit|MultiEdit": ".claude/check_documentation.py"
+    },
     "PostToolUse": {
       "Edit|Write": "echo 'Consider updating roadmap progress if tasks were completed'"
     },
