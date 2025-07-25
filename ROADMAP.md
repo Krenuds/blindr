@@ -33,21 +33,21 @@ Build and test each component in isolation, then integrate step by step. Start w
 **Goal**: Get a basic Discord bot running with voice channel capabilities
 
 ### Week 1-2: Basic Bot Setup
-- [x] Set up Python development environment
-- [x] Create Discord application and bot account
-- [x] Install discord.py with voice support
-- [x] Create basic bot that can:
-  - [x] Connect to Discord
-  - [x] Join/leave voice channels
-  - [x] Respond to text commands
-- [x] Test voice channel connection stability
+- [ ] Set up Python development environment
+- [ ] Create Discord application and bot account
+- [ ] Install discord.py with voice support
+- [ ] Create basic bot that can:
+  - [ ] Connect to Discord
+  - [ ] Join/leave voice channels
+  - [ ] Respond to text commands
+- [ ] Test voice channel connection stability
 
 ### Week 2-3: Voice Capture
-- [x] Implement voice recording using AudioSink
-- [x] Capture Opus packets from Discord
-- [x] Decode Opus to PCM format
-- [x] Save audio to files for testing
-- [x] Test with multiple users speaking
+- [ ] Implement voice recording using AudioSink
+- [ ] Capture Opus packets from Discord
+- [ ] Decode Opus to PCM format
+- [ ] Save audio to files for testing
+- [ ] Test with multiple users speaking
 
 **Milestone**: Bot can join voice channels and save audio files
 
