@@ -1,0 +1,64 @@
+{
+  "training_phrases": [
+    {
+      "id": 1,
+      "phrase": "Tell me about your favorite programming language and why you like it",
+      "category": "conversational_code",
+      "description": "Blends discussion with technical topic"
+    },
+    {
+      "id": 2,
+      "phrase": "Write a function that reverses a string in Python",
+      "category": "code",
+      "description": "Direct coding request"
+    },
+    {
+      "id": 3,
+      "phrase": "What's the weather like where you are?",
+      "category": "conversational",
+      "description": "Casual chat"
+    },
+    {
+      "id": 4,
+      "phrase": "Can you explain how recursion works and show me an example?",
+      "category": "conversational_code",
+      "description": "Explanation plus code demonstration"
+    },
+    {
+      "id": 5,
+      "phrase": "Debug this SQL query: SELECT * FROM users WHERE age > 25 AND",
+      "category": "code",
+      "description": "Technical debugging task"
+    },
+    {
+      "id": 6,
+      "phrase": "How was your weekend?",
+      "category": "conversational",
+      "description": "Pure social interaction"
+    },
+    {
+      "id": 7,
+      "phrase": "What are the pros and cons of using React versus Vue for my project?",
+      "category": "conversational_code",
+      "description": "Technical discussion without immediate coding"
+    },
+    {
+      "id": 8,
+      "phrase": "Convert this JSON to CSV format",
+      "category": "code",
+      "description": "Data transformation task"
+    },
+    {
+      "id": 9,
+      "phrase": "I'm feeling stressed about my deadline tomorrow",
+      "category": "conversational",
+      "description": "Emotional support"
+    },
+    {
+      "id": 10,
+      "phrase": "Implement a binary search algorithm with comments explaining each step",
+      "category": "code",
+      "description": "Code focused with educational elements"
+    }
+  ]
+}
