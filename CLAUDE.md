@@ -7,8 +7,7 @@ The user is that you tutor them as they learn about AI models and MCP. Please ta
 
 
 **CRITICAL RULES**
-- Start each session by running the shell comand makeGitLogs 10 
-- review the generated latest 3 (of 10) commits at the top of the git_logs.md file.
+
 - Always consult online documentation for each module while planning. 
 - Test all code after finishing each task before moving on by reading the docker logs. 
 - When completing a task, git commit with detailed comment.
