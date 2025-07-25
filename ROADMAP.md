@@ -33,14 +33,14 @@ Build and test each component in isolation, then integrate step by step. Start w
 **Goal**: Get a basic Discord bot running with voice channel capabilities
 
 ### Week 1-2: Basic Bot Setup
-- [ ] Set up Python development environment
-- [ ] Create Discord application and bot account
-- [ ] Install discord.py with voice support
-- [ ] Create basic bot that can:
-  - [ ] Connect to Discord
-  - [ ] Join/leave voice channels
-  - [ ] Respond to text commands
-- [ ] Test voice channel connection stability
+- [x] Set up Python development environment
+- [x] Create Discord application and bot account
+- [x] Install discord.py with voice support
+- [x] Create basic bot that can:
+  - [x] Connect to Discord
+  - [x] Join/leave voice channels
+  - [x] Respond to text commands
+- [x] Test voice channel connection stability
 
 ### Week 2-3: Voice Capture
 - [ ] Implement voice recording using AudioSink
