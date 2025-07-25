@@ -50,27 +50,20 @@ def get_git_context():
     return "No git context available"
 
 def get_roadmap_context():
-    """Get roadmap progress report"""
-    try:
-        result = subprocess.run(['.claude/roadmap_tracker.py'], 
-                              capture_output=True, text=True, check=True)
-        return result.stdout.strip()
-    except Exception as e:
-        return f"Error getting roadmap context: {e}"
+    """Get roadmap progress report - DISABLED for cleaner sessions"""
+    # Roadmap context removed - user manages their own input
+    # Claude can still use roadmap_tracker.py when specifically needed
+    return ""
 
 def main():
-    # Gather all context
+    # Gather git context only
     git_context = get_git_context()
-    roadmap_context = get_roadmap_context()
     
-    full_context = f"""PROJECT CONTEXT FOR CLAUDE:
+    full_context = f"""RECENT PROJECT HISTORY:
 
-{roadmap_context}
-
-RECENT GIT HISTORY:
 {git_context}
 
-This context helps Claude understand the current project state and development progress."""
+This context helps Claude understand recent development work and changes."""
 
     # Output JSON for Claude's context (not displayed to user)
     context_output = {
