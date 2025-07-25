@@ -2,3 +2,12 @@
 2025-07-25 18:49:38,055 - discord.gateway - INFO - Shard ID None has connected to Gateway (Session ID: 31794bd9226bf9c543aeacadc0e8415f).
 2025-07-25 18:49:40,061 - __main__ - INFO - BRODAN#4765 has connected to Discord!
 2025-07-25 18:49:40,061 - __main__ - INFO - Bot is in 1 servers
+2025-07-25 18:56:40,616 - discord.client - INFO - logging in using static token
+2025-07-25 18:56:41,456 - discord.gateway - INFO - Shard ID None has connected to Gateway (Session ID: 21e755877f12c08496b097c14c5893d1).
+2025-07-25 18:56:43,461 - __main__ - INFO - BRODAN#4765 has connected to Discord!
+2025-07-25 18:56:43,461 - __main__ - INFO - Bot is in 1 servers
+2025-07-25 18:56:43,463 - discord.voice_state - INFO - Connecting to voice...
+2025-07-25 18:56:43,463 - discord.voice_state - INFO - Starting voice handshake... (connection attempt 1)
+2025-07-25 18:56:43,660 - discord.voice_state - INFO - Voice handshake complete. Endpoint found: c-ewr11-75f3d9c6.discord.media
+2025-07-25 18:56:43,906 - discord.voice_state - INFO - Voice connection complete.
+2025-07-25 18:56:43,907 - __main__ - INFO - Successfully joined voice channel "blindr" in Delta Greenhorns
