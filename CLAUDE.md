@@ -15,26 +15,34 @@ The user is that you tutor them as they learn about AI models and MCP. Please ta
 - All commits end with "- UNTESTED" unless using /ready command.  
 - Git commit and comment after successfully completing untested tasks.
 
-**PROJECT OVERVIEW** 
-
 ## Target Architecture
-Discord User → Voice Channel → Bot (py-cord)
-    ↓
-[Audio Processing - src/bot/]
-VoiceBot → StreamingAudioSink → Whisper Service (:9000) → Text
-    ↓
-[Intelligence - src/llm/]
-Text → Intent Classification → Model Selection
-    ↓
-[Models via Ollama:11434]
-- Conversational → Llama 3.2 (3B)
-- Coding/Tools → Qwen 2.5-Coder (7B)
-    ↓
-[Response]
-Generated Text → Discord Text Channel
-    ↓
-[Future: TTS Integration]
-Generated Text → Piper TTS (Docker:10200) → Audio → Bot → User
+```
+User -->|"🎤 Voice Input"| DiscordServer
+DiscordServer -->|"📡 Opus Packets<br/>48kHz"| Bot
+
+Bot -->|"🎵 PCM/WAV Audio"| Whisper
+Whisper -->|"📝 Transcribed Text"| Bot
+
+Bot -->|"❓ User Query"| Classifier
+Classifier -->|"🏷️ Intent Classification<br/>(conversational/agentic)"| LangChain
+LangChain -->|"📝 Prompt + Context"| LiteLLM
+
+LiteLLM -->|"🚦 Routed Request"| Ollama
+Ollama -->|"💭 Conversational Route"| Llama
+Ollama -->|"🛠️ Agentic Route"| Qwen
+
+Llama -->|"💬 Response Text"| Ollama
+Qwen -->|"📋 Response Text"| Ollama
+Ollama -->|"✨ Generated Text"| LiteLLM
+LiteLLM -->|"📋 Structured Response"| LangChain
+LangChain -->|"📤 Final Response"| Bot
+
+Bot -.->|"📄 Response Text"| Piper
+Piper -.->|"🎶 Audio Stream<br/>WAV/PCM"| Bot
+
+Bot -.->|"🔊 Voice Output"| DiscordServer
+DiscordServer -.->|"🎧 Audio Stream"| User
+```
 
 ## Target Package Structure
 ```
@@ -46,8 +54,9 @@ src/
 │   ├── client.py           # HTTP client
 │   └── service.py          # FastAPI service
 ├── llm/                    # LLM integration domain
-│   ├── client.py           # Ollama HTTP client
-│   └── classifier.py       # Intent classification
+│   ├── client.py           # LiteLLM client for model routing
+│   ├── classifier.py       # DistilBERT intent classification
+│   └── chains.py           # LangChain prompt templates and chains
 ├── tts/                    # Text-to-speech domain (future)
 │   ├── client.py           # Piper TTS client
 │   └── service.py          # TTS processing
