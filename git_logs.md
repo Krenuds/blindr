@@ -1,11 +1,47 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 07:15:22
+Generated on: 2025-07-26 07:23:13
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 01d812e4
+### 1. Commit: 3c4aa790
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 07:18:36 -0400
+- **Subject:** fix: Resolve Whisper hallucination issues causing duplicate text
+
+**Full Commit Message:**
+```
+fix: Resolve Whisper hallucination issues causing duplicate text
+
+## Issues Fixed:
+1. WhisperClient parameter errors - removed unsupported parameters
+2. Improved prompt mode activation with debug logging
+3. Enhanced silence trimming to reduce audio artifacts
+4. Better audio quality filtering to prevent repetitive transcriptions
+
+## Key Changes:
+- Remove unsupported temperature/no_speech_threshold parameters
+- Add debug logging for prompt mode state tracking
+- Stricter silence trimming (5% threshold vs 2%)
+- Empty initial_prompt for longer segments to prevent patterns
+- More aggressive audio artifact filtering
+
+## Expected Result:
+- No more repetitive "9 9 9 9..." transcriptions
+- Proper prompt mode activation and accumulation
+- Cleaner audio processing with fewer artifacts
+- Better handling of short audio segments
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 01d812e4
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:09:49 -0400
@@ -24,7 +60,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 9b30683a
+### 3. Commit: 9b30683a
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:08:26 -0400
@@ -61,7 +97,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: e26f21f3
+### 4. Commit: e26f21f3
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:03:47 -0400
@@ -97,7 +133,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: e432e0ac
+### 5. Commit: e432e0ac
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:39:04 -0400
@@ -113,30 +149,6 @@ feat: Add members intent for efficient username resolution
 - Significantly improves performance of transcription username display
 
 Thanks to Discord API documentation for identifying the missing intent\!
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 82c8ee89
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 06:28:08 -0400
-- **Subject:** fix: Improve username lookup for transcriptions
-
-**Full Commit Message:**
-```
-fix: Improve username lookup for transcriptions
-
-- Add multiple fallback methods for getting usernames
-- Try guild.get_member(), then guild.fetch_member(), then bot.get_user()
-- Use text_channel.guild instead of channel.guild for more reliable access
-- Add better logging to show which username was resolved
-
-This should fix the 'User 1080530572365004830' display issue.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

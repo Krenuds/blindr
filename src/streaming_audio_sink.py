@@ -394,7 +394,10 @@ class StreamingAudioSink(discord.sinks.Sink):
                         self.user_prompt_finalizing[user_id] = False
                         self.user_prompt_start[user_id] = current_time
                         self.user_prompt_transcriptions[user_id] = []
-                        logger.info(f"🎙️ Prompt started for user {user_id}")
+                        # Clear overlap buffer to prevent audio bleeding between prompts
+                        if user_id in self.user_overlap_buffers:
+                            del self.user_overlap_buffers[user_id]
+                        logger.info(f"🎙️ Prompt started for user {user_id} (overlap buffer cleared)")
                     elif prompt_active:
                         logger.debug(f"Continuing existing prompt for user {user_id}")
                     else:
