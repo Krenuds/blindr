@@ -15,6 +15,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Query
 from fastapi.responses import JSONResponse
 from faster_whisper import WhisperModel
 import uvicorn
+from config_loader import get_whisper_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -106,19 +107,22 @@ class WhisperService:
             temp_path = temp_file.name
         
         try:
+            # Load configuration
+            whisper_config = get_whisper_config()
+            
             # Transcribe using faster-whisper
             segments, info = self.model.transcribe(
                 temp_path,
                 task=task,
                 language=language,
                 initial_prompt=initial_prompt,
-                beam_size=5,  # Good balance of speed and accuracy
+                beam_size=whisper_config['beam_size'],
                 best_of=5,
-                temperature=0.0,  # Deterministic output
+                temperature=whisper_config['temperature'],
                 compression_ratio_threshold=2.4,
                 log_prob_threshold=-1.0,
-                no_speech_threshold=0.6,
-                condition_on_previous_text=True,
+                no_speech_threshold=whisper_config['no_speech_threshold'],
+                condition_on_previous_text=whisper_config['condition_on_previous_text'],
                 word_timestamps=True if output_format == "json" else False
             )
             

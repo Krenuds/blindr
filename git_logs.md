@@ -1,11 +1,55 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 07:23:13
+Generated on: 2025-07-26 08:19:11
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 3c4aa790
+### 1. Commit: 5cc533e8
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 07:23:56 -0400
+- **Subject:** fix: Prevent audio context bleeding between separate prompts
+
+**Full Commit Message:**
+```
+fix: Prevent audio context bleeding between separate prompts
+
+## Issue:
+Whisper was incorrectly transcribing single words like "one", "two", "three"
+as "at a time, one.", "at a time, too.", "at a time." due to audio context
+bleeding from previous prompts through the overlap buffer system.
+
+## Root Cause:
+The overlap buffer (user_overlap_buffers) stores 0.5s of audio from the end
+of each segment and prepends it to the next segment. This works for continuous
+speech but breaks for separate prompts because Whisper interprets the overlap
+as contextual speech to continue, causing it to repeat the last phrase.
+
+## Examples from logs:
+- User said: "one" → Whisper heard: "at a time, one."
+- User said: "two" → Whisper heard: "at a time, too."
+- User said: "three" → Whisper heard: "at a time."
+
+## Fix:
+Clear overlap buffer when starting a new prompt to prevent audio bleeding
+between logically separate prompts. The overlap buffer is still preserved
+within individual prompts for word continuity.
+
+## Expected Result:
+- Single word prompts transcribe correctly without previous context
+- "one" transcribes as "one", not "at a time, one."
+- Maintains overlap functionality within multi-segment prompts
+- Clean separation between distinct prompts
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 3c4aa790
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:18:36 -0400
@@ -41,7 +85,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 01d812e4
+### 3. Commit: 01d812e4
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:09:49 -0400
@@ -60,7 +104,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 9b30683a
+### 4. Commit: 9b30683a
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:08:26 -0400
@@ -97,7 +141,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: e26f21f3
+### 5. Commit: e26f21f3
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:03:47 -0400
@@ -125,30 +169,6 @@ packet-based silence detection never triggered, causing 157s delays.
 - No more indefinite prompt accumulation
 
 This fixes the fundamental architectural flaw in silence detection.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: e432e0ac
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 06:39:04 -0400
-- **Subject:** feat: Add members intent for efficient username resolution
-
-**Full Commit Message:**
-```
-feat: Add members intent for efficient username resolution
-
-- Add intents.members = True to bot configuration
-- This enables access to Discord's member cache for fast username lookup
-- Now uses guild.get_member() (cached) instead of guild.fetch_member() (API call)
-- Significantly improves performance of transcription username display
-
-Thanks to Discord API documentation for identifying the missing intent\!
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
