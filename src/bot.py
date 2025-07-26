@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
@@ -61,18 +62,28 @@ async def start_streaming(guild_id: int, channel):
     """Start continuous audio streaming for a guild"""
     try:
         # Create streaming sink with custom transcription handler
-        streaming_sink = StreamingAudioSink(whisper_client)
+        # Pass the bot's event loop for cross-thread communication
+        bot_event_loop = asyncio.get_event_loop()
+        streaming_sink = StreamingAudioSink(whisper_client, bot_event_loop)
         
         # Override the send_transcription method to send to Discord
         async def send_transcription_to_discord(user_id: int, text: str, duration: float):
             try:
-                # Send transcription to the same channel where bot commands are used
-                # For now, we'll use the first text channel we can find
+                # Prefer 'transcriptions' channel if it exists, otherwise use first available
                 text_channel = None
+                
+                # First, look for a channel named 'transcriptions'
                 for ch in channel.guild.text_channels:
-                    if ch.permissions_for(channel.guild.me).send_messages:
+                    if ch.name.lower() == 'transcriptions' and ch.permissions_for(channel.guild.me).send_messages:
                         text_channel = ch
                         break
+                
+                # If no 'transcriptions' channel, use first available text channel
+                if not text_channel:
+                    for ch in channel.guild.text_channels:
+                        if ch.permissions_for(channel.guild.me).send_messages:
+                            text_channel = ch
+                            break
                 
                 if text_channel:
                     await text_channel.send(f"🎤 <@{user_id}> ({duration:.1f}s): {text}")

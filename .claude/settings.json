@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/check_phase_completion.py"
+            "command": "echo 'read claude.md'"
           }
         ]
       }

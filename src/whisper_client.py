@@ -189,6 +189,7 @@ class WhisperClient:
             params['initial_prompt'] = initial_prompt
         
         try:
+            logger.debug(f"Sending {len(audio_data)} bytes to Whisper at {self.base_url}/asr")
             async with self.session.post(
                 f"{self.base_url}/asr",
                 data=data,
@@ -197,7 +198,7 @@ class WhisperClient:
                 
                 if response.status == 200:
                     result = await response.json()
-                    logger.info(f"Transcription successful for {filename}")
+                    logger.info(f"Transcription successful for {filename}: {result}")
                     return result
                 else:
                     error_text = await response.text()
@@ -207,6 +208,9 @@ class WhisperClient:
         except aiohttp.ClientError as e:
             logger.error(f"HTTP error during transcription: {e}")
             raise Exception(f"Service communication error: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error during transcription: {e}", exc_info=True)
+            raise
     
     async def detect_language(
         self,
