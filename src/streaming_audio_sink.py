@@ -162,11 +162,11 @@ class StreamingAudioSink(discord.sinks.Sink):
             audio_array = audio_array[::resample_factor]
             sample_rate = 16000
         
-        # Trim silence from beginning and end to reduce hallucinations
-        # Simple energy-based silence trimming
-        if len(audio_array) > 160:  # At least 10ms of audio
+        # Aggressive silence trimming to reduce Whisper hallucinations
+        # This is critical for preventing repetitive transcriptions
+        if len(audio_array) > 320:  # At least 20ms of audio
             window_size = 160  # 10ms at 16kHz
-            energy_threshold = np.max(np.abs(audio_array)) * 0.02  # 2% of max amplitude
+            energy_threshold = np.max(np.abs(audio_array)) * 0.05  # 5% of max amplitude (stricter)
             
             # Find first non-silent sample
             start_idx = 0
@@ -218,19 +218,18 @@ class StreamingAudioSink(discord.sinks.Sink):
             # Send to Whisper for transcription
             logger.info(f"Sending {duration:.2f}s audio to Whisper for user {user_id}")
             
-            # Add prompt-specific parameters for better accuracy
-            # Avoid repetitive prompts that might appear in the output
-            initial_prompt = None
-            if self.config['prompt_mode'] and len(audio_segment) > 48000:  # Only for longer segments
-                # Use simple, non-repetitive prompts
-                initial_prompt = ""
+            # Use supported parameters to reduce Whisper hallucinations
+            transcription_params = {
+                "filename": f"stream_user_{user_id}.wav",
+                "language": "en",  # Force English to reduce hallucinations
+                "task": "transcribe",  # Explicit task
+            }
             
-            result = await self.whisper_client.transcribe_bytes(
-                wav_data,
-                filename=f"stream_user_{user_id}.wav",
-                language="en",  # Force English to reduce hallucinations
-                initial_prompt=initial_prompt
-            )
+            # For very short segments, avoid sending initial_prompt which can cause hallucinations
+            if duration >= 1.0:
+                transcription_params["initial_prompt"] = ""  # Empty prompt to prevent repetitive patterns
+            
+            result = await self.whisper_client.transcribe_bytes(wav_data, **transcription_params)
             
             if result and result.get('text'):
                 transcribed_text = result['text'].strip()
@@ -385,12 +384,21 @@ class StreamingAudioSink(discord.sinks.Sink):
                 logger.debug(f"Speech detected for user {user_id}")
                 
                 # In prompt mode, activate prompt tracking
-                if self.config['prompt_mode'] and not self.user_prompt_active.get(user_id, False) and not self.user_prompt_finalizing.get(user_id, False):
-                    self.user_prompt_active[user_id] = True
-                    self.user_prompt_finalizing[user_id] = False
-                    self.user_prompt_start[user_id] = current_time
-                    self.user_prompt_transcriptions[user_id] = []
-                    logger.info(f"🎙️ Prompt started for user {user_id}")
+                if self.config['prompt_mode']:
+                    prompt_active = self.user_prompt_active.get(user_id, False)
+                    prompt_finalizing = self.user_prompt_finalizing.get(user_id, False)
+                    logger.debug(f"Prompt mode check for user {user_id}: active={prompt_active}, finalizing={prompt_finalizing}")
+                    
+                    if not prompt_active and not prompt_finalizing:
+                        self.user_prompt_active[user_id] = True
+                        self.user_prompt_finalizing[user_id] = False
+                        self.user_prompt_start[user_id] = current_time
+                        self.user_prompt_transcriptions[user_id] = []
+                        logger.info(f"🎙️ Prompt started for user {user_id}")
+                    elif prompt_active:
+                        logger.debug(f"Continuing existing prompt for user {user_id}")
+                    else:
+                        logger.debug(f"Prompt blocked (finalizing) for user {user_id}")
             
             # Add to buffer and update activity time
             self.user_buffers[user_id].append(audio_bytes)

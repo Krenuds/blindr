@@ -1,11 +1,67 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 07:06:47
+Generated on: 2025-07-26 07:15:22
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: e26f21f3
+### 1. Commit: 01d812e4
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 07:09:49 -0400
+- **Subject:** fix: Remove duplicate finalize_prompt method causing transcription issues
+
+**Full Commit Message:**
+```
+fix: Remove duplicate finalize_prompt method causing transcription issues
+
+The StreamingAudioSink class had two finalize_prompt methods defined (lines 464-497 and 590-616), causing the second definition to overwrite the first. This led to missing error handling and potential issues with prompt finalization.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 9b30683a
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 07:08:26 -0400
+- **Subject:** fix: Remove duplicate words in prompt mode transcriptions
+
+**Full Commit Message:**
+```
+fix: Remove duplicate words in prompt mode transcriptions
+
+## Issue:
+When counting 'one twice three four', the word 'twice' appeared duplicated
+in transcriptions due to incorrect merge logic being applied in prompt mode.
+
+## Root Cause:
+merge_transcriptions() was being called for every segment in prompt mode,
+but this merge logic is designed for continuous streaming, not prompt
+accumulation. The overlap buffer already handles audio overlap properly.
+
+## Fix:
+- Skip merge_transcriptions() in prompt mode
+- Accumulate raw transcribed_text without merging
+- Only apply merge logic in continuous (non-prompt) mode
+- This preserves natural speech boundaries in prompts
+
+## Expected Result:
+- No more duplicate words in prompt transcriptions
+- Cleaner, more accurate prompt accumulation
+- 'one twice three four' will appear as intended without duplicates
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 3. Commit: e26f21f3
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 07:03:47 -0400
@@ -41,7 +97,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: e432e0ac
+### 4. Commit: e432e0ac
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:39:04 -0400
@@ -65,7 +121,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 82c8ee89
+### 5. Commit: 82c8ee89
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:28:08 -0400
@@ -81,54 +137,6 @@ fix: Improve username lookup for transcriptions
 - Add better logging to show which username was resolved
 
 This should fix the 'User 1080530572365004830' display issue.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 4. Commit: 0c5a71c9
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 06:24:48 -0400
-- **Subject:** feat: Simplify commands and add transcription toggle
-
-**Full Commit Message:**
-```
-feat: Simplify commands and add transcription toggle
-
-- Remove status, stream_info, and clear commands
-- Keep only transcribe and clearall commands
-- Convert transcribe to toggle transcription on/off globally
-- Add transcription_enabled flag to control message sending
-- Update help text to show simplified command set
-- Transcribe command shows status and available commands
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: e235c345
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 06:16:19 -0400
-- **Subject:** feat: Improve clear commands with bulk delete and add clearall
-
-**Full Commit Message:**
-```
-feat: Improve clear commands with bulk delete and add clearall
-
-- Replace slow individual deletion with Discord's bulk delete API
-- \!clear now uses channel.purge() for instant deletion (100 msgs at once)
-- Add \!clearall command to clear entire channel with confirmation
-- For channels >1000 messages, clearall uses clone/delete method
-- Update help text to include both clear commands
-- Fix Discord rate limiting issues during message deletion
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
