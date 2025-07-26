@@ -1,11 +1,135 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 10:19:00
+Generated on: 2025-07-26 10:43:16
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 5bc25d96
+### 1. Commit: 95b51304
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 10:36:55 -0400
+- **Subject:** fix: Replace unsafe dict deletion with pop() to prevent KeyError in timeout cleanup
+
+**Full Commit Message:**
+```
+fix: Replace unsafe dict deletion with pop() to prevent KeyError in timeout cleanup
+
+## Problem Fixed:
+Race condition between write() method and timeout_handler() both trying to
+delete from user_timeout_tasks dictionary, causing KeyError: user_id
+
+## Root Cause:
+- write() method: cancels timeout task and deletes dict entry
+- timeout_handler finally block: tries to delete same dict entry
+- Race condition when both execute simultaneously
+
+## Solution:
+Changed `del self.user_timeout_tasks[user_id]` to `self.user_timeout_tasks.pop(user_id, None)`
+in timeout_handler finally block for safe cleanup.
+
+## Testing:
+Bot now starts successfully without KeyError exceptions.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 7b1c3f73
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 10:20:09 -0400
+- **Subject:** Cleaning up unused files
+
+**Full Commit Message:**
+```
+Cleaning up unused files
+```
+
+---
+
+### 3. Commit: a144e5be
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 10:19:29 -0400
+- **Subject:** analysis: Document timeout handler failure and delayed Discord posting issue
+
+**Full Commit Message:**
+```
+analysis: Document timeout handler failure and delayed Discord posting issue
+
+## Core Problem Identified: Timeout Handler Not Working
+Live testing revealed the real issue is NOT audio duplication (that was user error)
+but rather transcripts only get posted to Discord when the NEXT speech segment starts.
+
+## Root Cause Analysis:
+
+### Current "Trust Discord VAD" Architecture:
+1. Discord sends packets only during detected speech (VAD working correctly)
+2. write() method accumulates packets in buffer per user
+3. Three processing triggers:
+   - Duration: 5.0s buffer → immediate processing
+   - Force: 8.0s buffer → emergency processing
+   - Timeout: 2.0s after last packet → delayed processing
+
+### The Timeout Mechanism Failure:
+- Expected: User speaks → stops → 2s later → process buffer → Discord post
+- Actual: User speaks → stops → no timeout processing → only processes on next speech
+
+## Evidence from Live Testing:
+- **NO "⏰ Speech segment timeout" messages in logs** (timeout never triggers)
+- **Force processing at 9-10s instead of 8.0s** (threshold not working)
+- **163.82s buffer accumulation** (catastrophic regression - worse than before)
+- **Transcripts only post when next speech starts** (confirms timeout failure)
+
+## Technical Issues Found:
+
+### 1. Single Timeout Task Architecture Problem:
+```python
+if user_id not in self.user_timeout_tasks:  # Only creates ONCE
+    future = timeout_handler(user_id, 2.0)
+```
+- Timeout task created when speech starts
+- Should clean up and recreate for each speech segment
+- Current logic may prevent new timeout tasks from being created
+
+### 2. Race Condition in Timeout Logic:
+```python
+time_since_last_packet = current_time - self.user_last_packet_time.get(user_id, 0)
+if time_since_last_packet >= timeout_duration:  # May fail due to timing
+```
+
+### 3. Force Processing Lock Logic Still Failing:
+- Multiple "⚠️ Force processing" warnings in rapid succession
+- Processing locks not preventing duplicate triggers
+- Force threshold (8.0s) not enforcing correctly (seeing 9-10s buffers)
+
+## Current State: REGRESSION
+- Previously: 100+ second buffers occasionally
+- Now: 163.82s buffer (worse than before)
+- Audio duplication eliminated ✓
+- But timeout mechanism completely broken ❌
+
+## Next Steps Required:
+1. Complete redesign of timeout task lifecycle management
+2. Fix force processing threshold enforcement (8.0s hard limit)
+3. Proper cleanup and recreation of timeout tasks per speech segment
+4. Add extensive timeout debugging logs to diagnose why timeouts never trigger
+
+The "Trust Discord VAD" approach is sound, but the timeout implementation
+needs fundamental architectural changes to work reliably.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 4. Commit: 5bc25d96
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 09:35:21 -0400
@@ -71,7 +195,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 897ef056
+### 5. Commit: 897ef056
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 08:44:40 -0400
@@ -104,163 +228,6 @@ Bot failed to start due to config_loader.py still trying to access
 - Minor overlap repetition remains (normal Whisper behavior)
 
 The core context bleeding problem is SOLVED\! 🎯
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 3. Commit: f29ab236
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 08:38:30 -0400
-- **Subject:** feat: Implement "Trust Discord VAD" approach for better segmentation
-
-**Full Commit Message:**
-```
-feat: Implement "Trust Discord VAD" approach for better segmentation
-
-## Key Insight:
-Discord already performs sophisticated VAD and only sends audio packets
-during detected speech activity. Our energy-based VAD was redundant and
-potentially conflicting with Discord's superior detection.
-
-## Changes Made:
-
-### 1. Configuration Simplified:
-- Added `trust_discord_vad: true` flag
-- Removed energy_threshold (no longer needed)
-- Increased segment_timeout to 2.0s for better separation
-- Removed complex VAD config section
-
-### 2. Removed Redundant VAD Logic:
-- Deleted `calculate_energy()` and `has_speech()` methods
-- Any packet from Discord = speech detected (trust the platform)
-- Simplified write() method significantly
-
-### 3. Focus on Timeout-Based Segmentation:
-- Use Discord silence gaps to determine segment boundaries
-- segment_timeout (2.0s) for completing speech segments
-- Much cleaner and more reliable than energy analysis
-
-### 4. Updated Documentation:
-- Clear comments explaining Discord VAD trust
-- Updated class docstrings and method descriptions
-- Status monitoring reflects new approach
-
-## Expected Benefits:
-- Eliminates fight between our VAD and Discord's VAD
-- More reliable speech segment detection
-- Simpler, more maintainable code
-- Should reduce context bleeding by trusting platform segmentation
-- Faster response times with longer segment timeout
-
-## Research Basis:
-Industry best practice is to trust platform VAD rather than
-duplicate detection logic. Discord's VAD includes sophisticated
-features like push-to-talk integration and background noise filtering.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 4. Commit: 22ccf00c
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 08:32:44 -0400
-- **Subject:** refactor: Remove all bandaid fixes and prepare for VAD-first approach
-
-**Full Commit Message:**
-```
-refactor: Remove all bandaid fixes and prepare for VAD-first approach
-
-## Bandaid Code Removed:
-1. condition_on_previous_text=False (caused new duplications)
-2. overlap_duration=0.0 (disabled beneficial overlap)
-3. Reduced buffer_duration from 5.0s to 2.5s (increased duplication)
-4. Overly aggressive silence trimming (5% vs 2%)
-5. Complex prompt mode logic that was causing issues
-6. Empty initial_prompt workarounds
-7. Overlap buffer clearing between prompts
-
-## Config Restored to Clean Baseline:
-- energy_threshold: 50 (from 30)
-- buffer_duration: 5.0 (from 2.5s)
-- overlap_duration: 0.5 (from 0.0)
-- Removed experimental settings
-- Disabled prompt_mode (was causing issues)
-
-## Added VAD Integration Preparation:
-- Created vad_processor.py module for future VAD-first approach
-- Added VAD config section (disabled by default)
-- Simplified audio processing pipeline
-
-## Expected Result:
-- Clean baseline for implementing proper VAD-first segmentation
-- No more bandaid fixes that made context bleeding worse
-- Codebase ready for research-backed VAD approach
-
-Research shows VAD-first segmentation is the industry standard solution
-for preventing context bleeding in streaming speech recognition.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 95d3d426
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 08:20:01 -0400
-- **Subject:** wip: Document failed attempts to fix context bleeding - made things worse
-
-**Full Commit Message:**
-```
-wip: Document failed attempts to fix context bleeding - made things worse
-
-## Original Issue (Still Unfixed):
-Context bleeding between prompts causing:
-- "one" → "at a time, one."
-- "two" → "at a time, too."
-- "three" → "at a time."
-
-## Failed Attempts That Made Things Worse:
-
-### 1. Set condition_on_previous_text=False
-- Expected: Fix context bleeding between prompts
-- Result: ❌ Context bleeding persists, created NEW within-prompt duplications
-
-### 2. Disabled overlap buffer (overlap_duration=0.0)
-- Expected: Prevent audio-level context bleeding
-- Result: ❌ No improvement, possibly made duplication worse
-
-### 3. Reduced buffer duration (5.0s → 2.5s)
-- Expected: Prevent Whisper hallucination on long segments
-- Result: ❌ Increased frequency of duplicated segments
-
-### 4. Created config system
-- Result: ✅ Works well for tuning, but doesn't solve core issue
-
-## Current State - WORSE Than Before:
-### Original context bleeding PLUS new within-prompt duplication:
-- "but I think the other part is working. But I think the other part is working."
-- "no I guess it isn't we're getting no I guess it isn't we're getting"
-- "Further away from where we want to be. Further away from where we want to be."
-
-## Next Steps:
-Need to either:
-1. Revert changes and try completely different approach
-2. Investigate if root cause is elsewhere in the system
-3. Research different Whisper parameters or post-processing solutions
-
-The research-backed "best practices" we followed have not worked for our specific Discord bot use case.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

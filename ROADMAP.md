@@ -77,13 +77,13 @@ Build and test each component in isolation, then integrate step by step. Start w
 - [x] Auto-join voice channels and start streaming immediately
 
 ### Week 6-7: Performance Optimization
-- [x] Implement overlap buffer strategy (0.5s overlap between segments)
-- [x] Increase buffer duration from 3.0s to 5.0s for better context
-- [x] Reduce silence timeout to 0.5s for faster response
-- [x] Add transcription merging to handle word boundaries
-- [x] Optimize for continuous speech (podcasts, conversations)
+- [ ] Implement overlap buffer strategy (0.5s overlap between segments)
+- [ ] Increase buffer duration from 3.0s to 5.0s for better context
+- [ ] Reduce silence timeout to 0.5s for faster response
+- [ ] Add transcription merging to handle word boundaries
+- [ ] Optimize for continuous speech (podcasts, conversations)
 
-**Milestone**: ✅ Bot transcribes voice to text seamlessly with no speech cutoffs
+**Milestone**: ✅ Bot almost works.
 
 ---
 
