@@ -76,20 +76,27 @@ Build and test each component in isolation, then integrate step by step. Start w
 - [x] Real-time transcription with immediate Discord feedback
 - [x] Auto-join voice channels and start streaming immediately
 
-**Milestone**: ✅ Bot transcribes voice to text in real-time with continuous streaming
+### Week 6-7: Performance Optimization
+- [x] Implement overlap buffer strategy (0.5s overlap between segments)
+- [x] Increase buffer duration from 3.0s to 5.0s for better context
+- [x] Reduce silence timeout to 0.5s for faster response
+- [x] Add transcription merging to handle word boundaries
+- [x] Optimize for continuous speech (podcasts, conversations)
+
+**Milestone**: ✅ Bot transcribes voice to text seamlessly with no speech cutoffs
 
 ---
 
 ## Phase 3: Basic LLM Integration 🤖
 **Goal**: Generate responses without routing
 
-### Week 5-6: Ollama Setup
+### Week 7-8: Ollama Setup
 - [ ] Install Ollama locally
 - [ ] Download and test Llama 3.2 model
 - [ ] Create simple HTTP client for Ollama
 - [ ] Test response generation
 
-### Week 6-7: Simple Chat Loop
+### Week 8-9: Simple Chat Loop
 - [ ] Connect transcribed text to Ollama
 - [ ] Generate responses with Llama 3.2
 - [ ] Return text responses to Discord (text channel first)
@@ -102,13 +109,13 @@ Build and test each component in isolation, then integrate step by step. Start w
 ## Phase 4: Text-to-Speech 🔊
 **Goal**: Complete the voice loop
 
-### Week 7-8: Piper Setup
+### Week 9-10: Piper Setup
 - [ ] Deploy Piper TTS in Docker
 - [ ] Test different voice models
 - [ ] Create API wrapper for Piper
 - [ ] Generate audio files from text
 
-### Week 8-9: Voice Response
+### Week 10-11: Voice Response
 - [ ] Convert AI responses to speech
 - [ ] Stream audio back to Discord
 - [ ] Handle audio queuing (multiple responses)
@@ -121,7 +128,7 @@ Build and test each component in isolation, then integrate step by step. Start w
 ## Phase 5: API Gateway 🌐
 **Goal**: Centralize communication between services
 
-### Week 9-10: FastAPI Development
+### Week 11-12: FastAPI Development
 - [ ] Create FastAPI application structure
 - [ ] Design RESTful endpoints:
   - [ ] POST /transcribe
@@ -131,7 +138,7 @@ Build and test each component in isolation, then integrate step by step. Start w
 - [ ] Add request/response logging
 - [ ] Implement error handling
 
-### Week 10-11: Refactor Bot
+### Week 12-13: Refactor Bot
 - [ ] Update bot to use API Gateway
 - [ ] Remove direct service connections
 - [ ] Add retry logic
@@ -144,13 +151,13 @@ Build and test each component in isolation, then integrate step by step. Start w
 ## Phase 6: Intelligent Routing 🧠
 **Goal**: Route requests based on intent
 
-### Week 11-12: DistilBERT Classifier
+### Week 13-14: DistilBERT Classifier
 - [ ] Create intent classification service
 - [ ] Train/fine-tune on conversational vs agentic examples
 - [ ] Deploy as FastAPI microservice
 - [ ] Test classification accuracy
 
-### Week 12-13: LiteLLM Integration
+### Week 14-15: LiteLLM Integration
 - [ ] Deploy LiteLLM proxy
 - [ ] Configure routing rules
 - [ ] Add Qwen 2.5-Coder to Ollama
