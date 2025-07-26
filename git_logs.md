@@ -1,11 +1,32 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 06:03:56
+Generated on: 2025-07-26 06:12:49
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: e4c33840
+### 1. Commit: fbfb033d
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 06:11:05 -0400
+- **Subject:** feat: Add !clear command and remove Discord mentions from transcriptions
+
+**Full Commit Message:**
+```
+feat: Add !clear command and remove Discord mentions from transcriptions
+
+- Added !clear command to delete all transcription messages from channel
+- Replace Discord mentions (@user) with display names to avoid pings
+- Updated help text to include new !clear command
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: e4c33840
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:00:16 -0400
@@ -18,7 +39,7 @@ Update git logs
 
 ---
 
-### 2. Commit: 7065cc4e
+### 3. Commit: 7065cc4e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 05:57:16 -0400
@@ -54,7 +75,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 7e6b3649
+### 4. Commit: 7e6b3649
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 23:05:39 -0400
@@ -93,7 +114,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: 5310afc6
+### 5. Commit: 5310afc6
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 22:46:17 -0400
@@ -102,19 +123,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Full Commit Message:**
 ```
 Update CLAUDE.md with PROJECT SETUP section and add numpy to requirements.txt
-```
-
----
-
-### 5. Commit: 16ffa769
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 22:44:32 -0400
-- **Subject:** Update ROADMAP.md with Phase 2 performance optimization milestone
-
-**Full Commit Message:**
-```
-Update ROADMAP.md with Phase 2 performance optimization milestone
 ```
 
 ---

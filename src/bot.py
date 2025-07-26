@@ -168,7 +168,7 @@ async def status_command(ctx):
     )
     embed.add_field(
         name="Commands",
-        value="!status - Show bot status\n!stream_info - Show streaming details\n!transcribe - Test Whisper service\n!clear - Clear transcription messages",
+        value="!status - Show bot status\n!stream_info - Show streaming details\n!transcribe - Test Whisper service\n!clear - Clear transcription messages (fast)\n!clearall - Clear entire channel (requires confirmation)",
         inline=False
     )
     embed.add_field(
@@ -263,7 +263,7 @@ async def transcribe_command(ctx, *, message: str = None):
 
 @bot.command(name='clear')
 async def clear_command(ctx):
-    """Clear all transcription messages from the transcriptions channel."""
+    """Clear all transcription messages from the transcriptions channel using bulk delete."""
     try:
         # Check if command is in the transcriptions channel
         if ctx.channel.name.lower() != 'transcriptions':
@@ -280,22 +280,93 @@ async def clear_command(ctx):
             await ctx.send("❌ I don't have permission to manage messages in the transcriptions channel!")
             return
         
-        # Delete messages with transcription pattern
-        deleted = 0
-        async for message in transcriptions_channel.history(limit=1000):
-            if message.author == bot.user and message.content.startswith("🎤"):
-                await message.delete()
-                deleted += 1
-                await asyncio.sleep(0.5)  # Rate limit protection
+        # Send progress message
+        progress_msg = await ctx.send("🔄 Clearing transcription messages...")
         
-        await ctx.send(f"✅ Cleared {deleted} transcription messages from #{transcriptions_channel.name}")
-        logger.info(f"Cleared {deleted} transcription messages from #{transcriptions_channel.name}")
+        # Define check function to filter transcription messages
+        def is_transcription(msg):
+            return msg.author == bot.user and msg.content.startswith("🎤")
+        
+        # Use purge with the check function - this uses bulk delete API
+        deleted = await transcriptions_channel.purge(limit=1000, check=is_transcription)
+        
+        # Update progress message with result
+        await progress_msg.edit(content=f"✅ Cleared {len(deleted)} transcription messages from #{transcriptions_channel.name}")
+        logger.info(f"Cleared {len(deleted)} transcription messages from #{transcriptions_channel.name}")
         
     except discord.Forbidden:
         await ctx.send("❌ I don't have permission to delete messages!")
     except Exception as e:
         logger.error(f"Failed to clear transcriptions: {e}")
         await ctx.send(f"❌ Failed to clear transcriptions: {str(e)}")
+
+
+@bot.command(name='clearall')
+async def clearall_command(ctx):
+    """Clear ALL messages from a channel (requires confirmation)."""
+    try:
+        # Check bot permissions
+        if not ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            await ctx.send("❌ I don't have permission to manage messages in this channel!")
+            return
+        
+        # Send confirmation message
+        confirm_msg = await ctx.send(
+            f"⚠️ **WARNING**: This will delete ALL messages in #{ctx.channel.name}!\n"
+            f"React with ✅ within 30 seconds to confirm."
+        )
+        await confirm_msg.add_reaction("✅")
+        
+        # Check for confirmation reaction
+        def check(reaction, user):
+            return (
+                user == ctx.author 
+                and str(reaction.emoji) == "✅" 
+                and reaction.message.id == confirm_msg.id
+            )
+        
+        try:
+            await bot.wait_for('reaction_add', timeout=30.0, check=check)
+        except asyncio.TimeoutError:
+            await confirm_msg.edit(content="❌ Clearall cancelled - no confirmation received.")
+            await confirm_msg.clear_reactions()
+            return
+        
+        # Clear reactions and update message
+        await confirm_msg.clear_reactions()
+        await confirm_msg.edit(content=f"🔄 Clearing all messages from #{ctx.channel.name}...")
+        
+        # Count messages first (for reporting)
+        message_count = 0
+        async for _ in ctx.channel.history(limit=None):
+            message_count += 1
+        
+        # Clone and delete channel for efficient clearing
+        if message_count > 1000:
+            # For large channels, clone and delete is more efficient
+            await confirm_msg.edit(content=f"🔄 Channel has {message_count} messages. Using clone method for efficiency...")
+            
+            # Clone the channel
+            new_channel = await ctx.channel.clone(reason=f"Clearall command by {ctx.author}")
+            await new_channel.edit(position=ctx.channel.position)
+            
+            # Delete the old channel
+            await ctx.channel.delete(reason=f"Clearall command by {ctx.author}")
+            
+            # Send confirmation in the new channel
+            await new_channel.send(f"✅ Channel cleared! Removed {message_count} messages.")
+            logger.info(f"Cleared {message_count} messages from #{new_channel.name} using clone method")
+        else:
+            # For smaller channels, use purge
+            deleted = await ctx.channel.purge(limit=None)
+            await ctx.send(f"✅ Cleared {len(deleted)} messages from #{ctx.channel.name}")
+            logger.info(f"Cleared {len(deleted)} messages from #{ctx.channel.name} using purge")
+        
+    except discord.Forbidden:
+        await ctx.send("❌ I don't have permission to manage this channel!")
+    except Exception as e:
+        logger.error(f"Failed to clear channel: {e}")
+        await ctx.send(f"❌ Failed to clear channel: {str(e)}")
 
 
 # Streaming callback is handled internally by StreamingAudioSink
