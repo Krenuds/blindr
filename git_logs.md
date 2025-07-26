@@ -1,11 +1,81 @@
 # Git Log - blindr
 
-Generated on: 2025-07-25 20:07:42
+Generated on: 2025-07-25 21:18:11
 Directory: /home/travis/blindr
 
 ## Last 10 Commits
 
-### 1. Commit: 8fa52a29
+### 1. Commit: 83f0e994
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 21:14:56 -0400
+- **Subject:** Design: Add streaming audio architecture plan using brodan approach
+
+**Full Commit Message:**
+```
+Design: Add streaming audio architecture plan using brodan approach
+
+📋 STREAMING AUDIO DESIGN DOCUMENT
+
+Created comprehensive design document for replacing manual recording
+with continuous audio streaming, based on proven brodan repository approach.
+
+## Key Design Decisions:
+✅ Use brodan's STTAudioSink with energy-based VAD instead of complex WebRTC VAD
+✅ Implement buffered streaming (3-second segments) to Whisper
+✅ Auto-join voice channels and start streaming immediately
+✅ Simple threshold-based silence filtering (energy_threshold: 50)
+
+## Implementation Plan:
+- Adapt brodan/src/audio_processor.py → blindr/src/streaming_audio_sink.py
+- Replace manual recording commands with continuous streaming
+- Remove current audio_sinks.py manual recording infrastructure
+- Add auto-join functionality from brodan's proven approach
+
+## Benefits:
+- Production-tested approach from working brodan implementation
+- Simple energy-based VAD instead of complex detection algorithms
+- Real-time transcription with 3-second buffered segments
+- No manual user intervention required for continuous operation
+
+This design provides a clear roadmap for implementing streaming audio
+using a proven, efficient architecture that aligns with the simplified
+approach of continuous streaming to Whisper without complex VAD.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 50f247c0
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 20:08:13 -0400
+- **Subject:** Add remaining project files and update tracking
+
+**Full Commit Message:**
+```
+Add remaining project files and update tracking
+
+✅ PROJECT COMPLETION
+
+Add remaining development files:
+- docker-compose.yml for container orchestration
+- src/whisper_service.py native Whisper service
+- Update phase tracking and git logs
+
+All files properly managed with gitignore rules in place.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 3. Commit: 741ac46a
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 20:06:48 -0400
@@ -37,7 +107,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 9de98e95
+### 4. Commit: 3cd2b1cc
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 20:04:37 -0400
@@ -81,7 +151,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 7ba122f4
+### 5. Commit: 21c1de85
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 19:21:30 -0400
@@ -107,7 +177,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: 9e967916
+### 6. Commit: a1173b87
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 19:21:13 -0400
@@ -161,7 +231,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 5. Commit: 300f7af0
+### 7. Commit: 100cd47a
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 19:20:29 -0400
@@ -236,7 +306,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 6. Commit: 195ba080
+### 8. Commit: c0d2f497
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 19:05:01 -0400
@@ -285,7 +355,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 7. Commit: 10b0e77b
+### 9. Commit: f3ccb384
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:57:40 -0400
@@ -340,7 +410,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 8. Commit: b2d241fb
+### 10. Commit: 02f5a654
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:50:33 -0400
@@ -385,97 +455,6 @@ commands as proof of concept.
 
 ## Phase 1 Progress: 6/10 tasks completed
 Next: Voice channel connection and audio capture implementation
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 9. Commit: d9966f4a
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 18:23:45 -0400
-- **Subject:** Simplify UserPromptSubmit hook - Remove roadmap auto-injection
-
-**Full Commit Message:**
-```
-Simplify UserPromptSubmit hook - Remove roadmap auto-injection
-
-🧹 HOOK SYSTEM CLEANUP
-
-Removed automatic roadmap progress injection from session startup.
-Claude now receives only recent git history as context, making sessions
-cleaner and more focused.
-
-## Changes:
-✅ UserPromptSubmit hook now provides only git history context
-✅ Roadmap context removed from automatic injection
-✅ User manages their own input about what to work on
-✅ Claude focuses on updating roadmap progress as tasks complete
-
-## Benefits:
-- Cleaner session startup with relevant context only
-- Less noise and information overload
-- User-controlled development focus
-- Claude still has roadmap_tracker.py available when needed
-
-The hook system is now more focused and user-friendly while maintaining
-all tracking capabilities.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 10. Commit: 38f0402e
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 18:19:00 -0400
-- **Subject:** Add Documentation Checking Hook (PreToolUse)
-
-**Full Commit Message:**
-```
-Add Documentation Checking Hook (PreToolUse)
-
-🔍 DOCUMENTATION VALIDATION ENHANCEMENT
-
-Added intelligent documentation checking to prevent Claude from making
-assumptions about APIs and integrations. The system now automatically
-reminds Claude to consult official documentation before implementing.
-
-## What was added:
-
-### PreToolUse Hook (.claude/check_documentation.py)
-✅ Detects API/integration patterns in code being written
-✅ Provides specific documentation suggestions based on detected libraries
-✅ Non-blocking reminder system that encourages best practices
-✅ Covers major technologies: Discord.py, FastAPI, Ollama, Whisper, etc.
-
-### Smart Pattern Detection
-- Discord.py → Official Discord.py docs and examples
-- FastAPI → Official FastAPI documentation
-- Ollama → Ollama API reference
-- Whisper → OpenAI Whisper documentation
-- Async patterns → Python asyncio docs
-- And more...
-
-### Hook Configuration Updated
-- Added PreToolUse hook for Write < /dev/null | Edit|MultiEdit tools
-- Integrates seamlessly with existing hook system
-- Maintains all existing functionality
-
-## Benefits:
-- Prevents API assumptions and incorrect implementations
-- Encourages consulting proven examples and official docs
-- Improves code quality and reliability
-- Reduces debugging time from incorrect API usage
-
-The hook intelligently identifies when Claude is about to implement
-API integrations and provides targeted documentation reminders.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

@@ -25,7 +25,7 @@ class WhisperService:
     
     def __init__(self):
         self.model = None
-        self.model_size = "tiny"  # Start with tiny model for faster testing
+        self.model_size = "small"  # Optimal balance of speed and accuracy for RTX 2080
         
         # Try CUDA first, now that cuDNN is installed
         if torch.cuda.is_available():

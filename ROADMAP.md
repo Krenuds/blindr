@@ -60,7 +60,7 @@ Build and test each component in isolation, then integrate step by step. Start w
 - [x] Deploy Whisper as native service (faster-whisper with GPU)
 - [x] Set up REST API endpoint (port 9000)
 - [x] Test Whisper with saved audio files
-- [ ] Optimize model size (currently using tiny model)
+- [x] Optimize model size (upgraded from tiny to small model for RTX 2080)
 
 ### Week 4-5: Bot-to-Whisper Pipeline
 - [ ] Connect bot to Whisper API

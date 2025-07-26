@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 from audio_sinks import PCMRecordingSink, WAVRecordingSink, MultiFormatSink
+from whisper_client import WhisperClient
 
 # Load environment variables
 load_dotenv()
@@ -28,6 +29,9 @@ bot = commands.Bot(command_prefix=os.getenv('BOT_PREFIX', '!'), intents=intents)
 # Recording state management
 connections = {}
 recording_sinks = {}
+
+# Initialize Whisper client
+whisper_client = WhisperClient(os.getenv('WHISPER_URL', 'http://localhost:9000'))
 
 async def join_voice_channel():
     """Find and join the configured voice channel"""
@@ -85,7 +89,7 @@ async def status_command(ctx):
     )
     embed.add_field(
         name="Commands",
-        value="!status - Show bot status\n!start_recording - Start audio capture\n!stop_recording - Stop and save audio",
+        value="!status - Show bot status\n!start_recording - Start audio capture\n!stop_recording - Stop and save audio\n!transcribe - Transcribe latest audio file",
         inline=False
     )
     embed.add_field(
@@ -100,7 +104,7 @@ async def status_command(ctx):
     )
     embed.add_field(
         name="Phase Progress",
-        value="✅ Phase 1: Voice channel connection\n🎤 Phase 1: Audio capture implementation",
+        value="✅ Phase 1: Voice channel connection\n✅ Phase 1: Audio capture implementation\n✅ Phase 2: Whisper integration (voice-to-text)",
         inline=False
     )
     await ctx.send(embed=embed)
@@ -172,6 +176,54 @@ async def stop_recording_command(ctx):
         await ctx.send(f"❌ Failed to stop recording: {str(e)}")
 
 
+@bot.command(name='transcribe')
+async def transcribe_command(ctx, *, message: str = None):
+    """Transcribe the most recent audio file or test Whisper service."""
+    if message:
+        # If user provides a message, just echo it back (for testing)
+        await ctx.send(f"🎤 You said: {message}")
+        return
+    
+    # Check if there are any recent audio files
+    import glob
+    from pathlib import Path
+    
+    audio_dir = Path("recorded_audio")
+    if not audio_dir.exists():
+        await ctx.send("❌ No recorded audio directory found. Record some audio first with `!start_recording`")
+        return
+    
+    # Find the most recent audio file
+    audio_files = list(audio_dir.glob("*.wav"))
+    if not audio_files:
+        await ctx.send("❌ No audio files found. Record some audio first with `!start_recording`")
+        return
+    
+    # Get the most recent file
+    latest_file = max(audio_files, key=lambda f: f.stat().st_mtime)
+    
+    try:
+        await ctx.send(f"🔄 Transcribing {latest_file.name}...")
+        
+        # Transcribe using Whisper
+        result = await whisper_client.transcribe_file(latest_file)
+        
+        if result and result.get('text'):
+            transcribed_text = result['text'].strip()
+            if transcribed_text:
+                await ctx.send(f"📝 **Transcription**: {transcribed_text}")
+            else:
+                await ctx.send("⚠️ No speech detected in the audio file.")
+        else:
+            await ctx.send("❌ Transcription failed - no text returned.")
+            
+    except FileNotFoundError:
+        await ctx.send(f"❌ Audio file not found: {latest_file}")
+    except Exception as e:
+        logger.error(f"Transcription error: {e}")
+        await ctx.send(f"❌ Transcription failed: {str(e)}")
+
+
 async def recording_finished_callback(sink, channel, *args):
     """Callback function called when recording finishes."""
     try:
@@ -182,20 +234,55 @@ async def recording_finished_callback(sink, channel, *args):
             await channel.send("⚠️ No audio was recorded (no users were speaking).")
             return
         
-        # Create Discord file objects from recorded audio
+        # Create Discord file objects from recorded audio and transcribe
         files = []
+        transcriptions = []
+        
         for user_id, audio in sink.audio_data.items():
             if audio.file.tell() > 0:  # Only include files with actual audio data
                 filename = f"user_{user_id}.{sink.encoding}"
                 audio.file.seek(0)
                 files.append(discord.File(audio.file, filename))
+                
+                # Attempt to transcribe the audio
+                try:
+                    audio.file.seek(0)
+                    audio_bytes = audio.file.read()
+                    
+                    if len(audio_bytes) > 1000:  # Only transcribe if there's substantial audio
+                        result = await whisper_client.transcribe_bytes(
+                            audio_bytes, 
+                            filename=filename
+                        )
+                        
+                        if result and result.get('text'):
+                            transcribed_text = result['text'].strip()
+                            if transcribed_text:
+                                transcriptions.append(f"<@{user_id}>: {transcribed_text}")
+                
+                except Exception as e:
+                    logger.warning(f"Failed to transcribe audio for user {user_id}: {e}")
+                    continue
         
+        # Send results
         if files:
-            await channel.send(
-                f"🎵 Recording complete! Captured audio from: {', '.join(recorded_users)}",
-                files=files
-            )
-            logger.info(f"Sent {len(files)} recorded audio files to channel")
+            message_parts = [f"🎵 Recording complete! Captured audio from: {', '.join(recorded_users)}"]
+            
+            if transcriptions:
+                message_parts.append("\n📝 **Transcriptions:**")
+                message_parts.extend(transcriptions)
+            
+            message = "\n".join(message_parts)
+            
+            # Split message if too long for Discord (2000 char limit)
+            if len(message) > 1900:
+                await channel.send(f"🎵 Recording complete! Captured audio from: {', '.join(recorded_users)}", files=files)
+                if transcriptions:
+                    await channel.send("📝 **Transcriptions:**\n" + "\n".join(transcriptions))
+            else:
+                await channel.send(message, files=files)
+                
+            logger.info(f"Sent {len(files)} recorded audio files to channel with {len(transcriptions)} transcriptions")
         else:
             await channel.send("⚠️ Recording complete, but no audio data was captured.")
             
@@ -217,6 +304,10 @@ async def cleanup():
     if hasattr(bot, 'voice_client_ref') and bot.voice_client_ref:
         await bot.voice_client_ref.disconnect()
         logger.info('Disconnected from voice channel')
+    
+    # Close Whisper client
+    await whisper_client.close()
+    logger.info('Closed Whisper client connection')
 
 if __name__ == "__main__":
     token = os.getenv('DISCORD_BOT_TOKEN')

@@ -7,9 +7,10 @@ The user is that you tutor them as they learn about AI models and MCP. Please ta
 
 
 **CRITICAL RULES**
-
+- Always begin sessions by reading the latest 4 commits in git_logs.md
 - Always consult online documentation for each module while planning. 
-- Test all code after finishing each task before moving on by reading the service logs.  
+- Test all code after finishing each task before moving on by reading the service logs.
+- Git commit with comment after successfully completing tasks.  
 - All models are running locally. Either via docker or as system services.
 
 **PROJECT OVERVIEW** 

@@ -60,7 +60,7 @@ def create_documentation_reminder(suggestions):
     message = """
 🔍 DOCUMENTATION REMINDER
 
-Before implementing this code, please ensure you're following proven patterns by consulting:
+Before implementing this code, ensure you're following proven patterns by consulting:
 
 """
     for i, suggestion in enumerate(set(suggestions), 1):
@@ -68,12 +68,8 @@ Before implementing this code, please ensure you're following proven patterns by
     
     message += """
 📋 Recommended approach:
-- Check official API documentation for exact syntax and parameters
+- Check official API documentation against our current code
 - Look for official examples or sample code
-- Verify latest version compatibility and best practices
-- Consider error handling patterns from official sources
-
-This helps avoid assumptions and ensures robust, correct implementations.
 """
     
     return message
