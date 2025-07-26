@@ -317,14 +317,19 @@ class StreamingAudioSink(discord.sinks.Sink):
         # Update last packet time
         self.user_last_packet_time[user_id] = current_time
         
-        # Simple timeout approach - only start if no timeout task exists
-        if user_id not in self.user_timeout_tasks:
-            timeout_duration = self.config.get('segment_timeout', 2.0)
-            future = asyncio.run_coroutine_threadsafe(
-                self.timeout_handler(user_id, timeout_duration),
-                self.bot_event_loop
-            )
-            self.user_timeout_tasks[user_id] = future
+        # Cancel and recreate timeout task for each speech segment
+        # This ensures each new speech gets its own timeout handler
+        if user_id in self.user_timeout_tasks:
+            self.user_timeout_tasks[user_id].cancel()
+            del self.user_timeout_tasks[user_id]
+        
+        # Always create fresh timeout task for current speech segment
+        timeout_duration = self.config.get('segment_timeout', 2.0)
+        future = asyncio.run_coroutine_threadsafe(
+            self.timeout_handler(user_id, timeout_duration),
+            self.bot_event_loop
+        )
+        self.user_timeout_tasks[user_id] = future
     
     
     def cleanup(self):
@@ -408,6 +413,5 @@ class StreamingAudioSink(discord.sinks.Sink):
             logger.error(f"Error in timeout handler for user {user_id}: {e}")
         finally:
             # Always clean up timeout task reference
-            if user_id in self.user_timeout_tasks:
-                del self.user_timeout_tasks[user_id]
+            self.user_timeout_tasks.pop(user_id, None)
     
