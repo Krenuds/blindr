@@ -96,7 +96,10 @@ async def start_streaming(guild_id: int, channel):
                             break
                 
                 if text_channel:
-                    await text_channel.send(f"🎤 <@{user_id}> ({duration:.1f}s): {text}")
+                    # Get member to display name instead of tagging
+                    member = channel.guild.get_member(user_id)
+                    username = member.display_name if member else f"User {user_id}"
+                    await text_channel.send(f"🎤 {username} ({duration:.1f}s): {text}")
                     logger.info(f"Sent transcription to Discord: {text}")
             except Exception as e:
                 logger.error(f"Failed to send transcription to Discord: {e}")
@@ -165,7 +168,7 @@ async def status_command(ctx):
     )
     embed.add_field(
         name="Commands",
-        value="!status - Show bot status\n!stream_info - Show streaming details\n!transcribe - Test Whisper service",
+        value="!status - Show bot status\n!stream_info - Show streaming details\n!transcribe - Test Whisper service\n!clear - Clear transcription messages",
         inline=False
     )
     embed.add_field(
@@ -256,6 +259,43 @@ async def transcribe_command(ctx, *, message: str = None):
     except Exception as e:
         logger.error(f"Whisper service test error: {e}")
         await ctx.send(f"❌ Whisper service test failed: {str(e)}")
+
+
+@bot.command(name='clear')
+async def clear_command(ctx):
+    """Clear all transcription messages from the transcriptions channel."""
+    try:
+        # Check if command is in the transcriptions channel
+        if ctx.channel.name.lower() != 'transcriptions':
+            # Look for transcriptions channel
+            transcriptions_channel = discord.utils.get(ctx.guild.text_channels, name='transcriptions')
+            if not transcriptions_channel:
+                await ctx.send("❌ No 'transcriptions' channel found!")
+                return
+        else:
+            transcriptions_channel = ctx.channel
+        
+        # Check bot permissions
+        if not transcriptions_channel.permissions_for(ctx.guild.me).manage_messages:
+            await ctx.send("❌ I don't have permission to manage messages in the transcriptions channel!")
+            return
+        
+        # Delete messages with transcription pattern
+        deleted = 0
+        async for message in transcriptions_channel.history(limit=1000):
+            if message.author == bot.user and message.content.startswith("🎤"):
+                await message.delete()
+                deleted += 1
+                await asyncio.sleep(0.5)  # Rate limit protection
+        
+        await ctx.send(f"✅ Cleared {deleted} transcription messages from #{transcriptions_channel.name}")
+        logger.info(f"Cleared {deleted} transcription messages from #{transcriptions_channel.name}")
+        
+    except discord.Forbidden:
+        await ctx.send("❌ I don't have permission to delete messages!")
+    except Exception as e:
+        logger.error(f"Failed to clear transcriptions: {e}")
+        await ctx.send(f"❌ Failed to clear transcriptions: {str(e)}")
 
 
 # Streaming callback is handled internally by StreamingAudioSink
