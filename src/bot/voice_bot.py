@@ -4,28 +4,16 @@ import asyncio
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
-from ..audio import DiscordAudioSink
+from .audio_processing import StreamingAudioSink
 from ..whisper import WhisperClient
 from ..config import get_streaming_config
 
 load_dotenv()
-
-# Ensure logs directory exists - handle both relative and absolute paths
-log_file = os.getenv("LOG_FILE", "logs/bot.log")
-if not os.path.isabs(log_file):
-    # Make relative paths relative to the project root
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    log_file = os.path.join(project_root, log_file)
-
-log_dir = os.path.dirname(log_file)
-if log_dir and not os.path.exists(log_dir):
-    os.makedirs(log_dir, exist_ok=True)
-
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(log_file),
+        logging.FileHandler(os.getenv("LOG_FILE", "logs/bot.log")),
         logging.StreamHandler(),
     ],
 )
@@ -148,7 +136,7 @@ class VoiceBot:
         """Create and configure the audio processing sink."""
         bot_event_loop = asyncio.get_event_loop()
         config = get_streaming_config()
-        return DiscordAudioSink(self.whisper_client, bot_event_loop, config)
+        return StreamingAudioSink(self.whisper_client, bot_event_loop, config)
 
     def setup_transcription_handler(self, audio_sink, channel):
         """Setup the transcription handler for the audio sink."""

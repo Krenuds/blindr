@@ -1,11 +1,54 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 14:55:05
+Generated on: 2025-07-26 15:49:54
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 8ec6ce4c
+### 1. Commit: d05a1bfa
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 15:15:20 -0400
+- **Subject:** fix: correct event loop error in prompt hard cap handling - UNTESTED
+
+**Full Commit Message:**
+```
+fix: correct event loop error in prompt hard cap handling - UNTESTED
+
+Fixed 'no running event loop' error when prompt duration exceeds max limit
+by using asyncio.run_coroutine_threadsafe instead of asyncio.create_task
+for cross-thread coroutine execution.
+```
+
+---
+
+### 2. Commit: ff6ae117
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 15:12:06 -0400
+- **Subject:** feat: implement prompt mode for continuous speech concatenation - UNTESTED
+
+**Full Commit Message:**
+```
+feat: implement prompt mode for continuous speech concatenation - UNTESTED
+
+Restored the original prompt mode functionality that accumulates multiple speech
+segments and combines them into a single message when the user stops speaking.
+
+Key changes:
+- Added prompt mode configuration with longer silence timeout (2.0s)
+- Accumulate transcriptions in user_prompt_transcriptions list
+- Only finalize prompts after prompt_silence_timeout of silence
+- Separate segment processing from prompt finalization
+- Track last speech time to determine when to finalize prompts
+
+This allows continuous speech to be treated as a single input rather than
+being broken into separate messages for each audio segment.
+```
+
+---
+
+### 3. Commit: 8ec6ce4c
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:40:28 -0400
@@ -24,7 +67,7 @@ preventing the race condition that was stopping transcriptions from processing.
 
 ---
 
-### 2. Commit: 3f2f4372
+### 4. Commit: 3f2f4372
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:21:17 -0400
@@ -72,7 +115,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 30bbe2db
+### 5. Commit: 30bbe2db
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:08:42 -0400
@@ -115,68 +158,6 @@ Fixed critical runtime errors in the Discord audio interface after domain reorga
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 4. Commit: 2028b8fa
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 14:03:12 -0400
-- **Subject:** refactor: reorganize into audio-centric domain architecture - UNTESTED
-
-**Full Commit Message:**
-```
-refactor: reorganize into audio-centric domain architecture - UNTESTED
-
-## Domain Reorganization Complete
-Successfully inverted the architecture to make audio processing the core domain
-instead of Discord being central. This creates a cleaner, more extensible structure.
-
-## New Architecture:
-- **Audio Domain**: Core audio processing (AudioProcessor, BufferManager, TimeoutManager)
-- **Discord Interface**: Lightweight wrapper around audio core (DiscordAudioSink)
-- **Bot Package**: Pure Discord I/O, commands, and channel management
-
-## Changes Made:
-1. **Created `src/audio/` package** - Core audio processing domain
-   - `streaming_sink.py` - Pure audio processing components
-   - `discord_interface.py` - Discord-specific audio capture
-
-2. **Simplified `src/bot/voice_bot.py`** - Now uses audio domain
-   - Removed audio processing logic
-   - Clean import from audio domain
-   - Focus on Discord ceremony only
-
-3. **Removed `src/bot/audio_processing.py`** - Moved to audio domain
-
-## Benefits:
-- **Reusable Core**: Audio processing independent of Discord
-- **Clean Separation**: Discord is just one interface to audio core
-- **Extensible**: Easy to add web interface, mobile app, API endpoints
-- **Maintainable**: Clear domain boundaries
-
-## Ready For:
-- LLM integration can now coordinate audio → Whisper → classification → model routing
-- Additional interfaces (web, mobile) can reuse the same audio core
-- Microservices architecture when needed
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: c7c9f346
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 13:37:17 -0400
-- **Subject:** docs: enhance architecture with 3-way classification and rename tts to piper - UNTESTED
-
-**Full Commit Message:**
-```
-docs: enhance architecture with 3-way classification and rename tts to piper - UNTESTED
 ```
 
 ---

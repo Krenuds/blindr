@@ -45,18 +45,16 @@ Bot -.->|"🔊 Voice Output"| DiscordServer
 DiscordServer -.->|"🎧 Audio Stream"| User
 ```
 
-## Current Package Structure
+## Target Package Structure
 ```
 src/
-├── audio/                  # Core audio processing domain  
-│   ├── streaming_sink.py   # Core audio components (AudioProcessor, BufferManager, TimeoutManager)
-│   └── discord_interface.py # Discord-specific audio capture (DiscordAudioSink)
-├── bot/                    # Discord interface domain
-│   └── voice_bot.py        # Discord I/O, commands, channel management
+├── bot/                     # Discord voice bot domain
+│   ├── voice_bot.py        # Main Discord bot class
+│   └── audio_processing.py # Audio components
 ├── whisper/                # Speech-to-text domain
 │   ├── client.py           # HTTP client
 │   └── service.py          # FastAPI service
-├── llm/                    # LLM integration domain (future)
+├── llm/                    # LLM integration domain
 │   ├── client.py           # LiteLLM client for model routing
 │   ├── classifier.py       # DistilBERT 3-way intent classification
 │   └── chains.py           # LangChain prompt templates and chains
@@ -67,10 +65,4 @@ src/
 │   └── loader.py           # Config utilities
 └── main.py                 # Entry point
 ```
-
-## Architecture Benefits
-- **Audio as Core Domain**: Audio processing is now the central reusable component
-- **Discord as Interface**: Bot is now just one interface to the audio core
-- **Separation of Concerns**: Clear boundaries between audio processing and Discord I/O
-- **Extensible**: Easy to add web interface, mobile app, or API endpoints using the same audio core
 
