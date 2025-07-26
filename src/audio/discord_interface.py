@@ -153,9 +153,11 @@ class DiscordAudioSink(discord.sinks.Sink):
                 prompt_duration = current_time - self.buffer_manager.user_prompt_start.get(user_id, current_time)
                 if prompt_duration >= self.config["prompt_max_duration"]:
                     logger.info(f"⏱️ Prompt hard cap reached for user {user_id} ({prompt_duration:.1f}s)")
-                    # Process remaining buffer and finalize prompt
-                    asyncio.create_task(self._process_user_timeout(user_id))
-                    asyncio.create_task(self.finalize_prompt(user_id))
+                    # Mark prompt as inactive to prevent multiple finalizations
+                    self.buffer_manager.user_prompt_active[user_id] = False
+                    # Process remaining buffer and finalize prompt using coroutine threadsafe
+                    asyncio.run_coroutine_threadsafe(self._process_user_timeout(user_id), self.bot_event_loop)
+                    asyncio.run_coroutine_threadsafe(self.finalize_prompt(user_id), self.bot_event_loop)
                     # Clear timeout to prevent double processing
                     self.timeout_manager.cancel_timeout(user_id)
                     return
