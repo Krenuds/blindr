@@ -587,30 +587,3 @@ class StreamingAudioSink(discord.sinks.Sink):
         except Exception as e:
             logger.error(f"Error in timeout handler for user {user_id}: {e}")
     
-    async def finalize_prompt(self, user_id: int):
-        """
-        Finalize a prompt by combining all accumulated transcriptions.
-        """
-        logger.info(f"🔄 finalize_prompt called for user {user_id}")
-        # Check if there are no transcriptions to finalize
-        transcriptions = self.user_prompt_transcriptions.get(user_id, [])
-        if not transcriptions:
-            logger.warning(f"⚠️ No transcriptions found for user {user_id} during finalization")
-            # Reset finalizing flag even if no transcriptions
-            self.user_prompt_finalizing[user_id] = False
-            return
-        
-        # Combine all transcriptions into one prompt
-        combined_text = " ".join(transcriptions)
-        prompt_start_time = self.user_prompt_start.get(user_id, time.time())
-        prompt_duration = time.time() - prompt_start_time
-        
-        # Send the combined prompt
-        await self.send_transcription(user_id, f"[PROMPT {prompt_duration:.1f}s] {combined_text}", prompt_duration)
-        logger.info(f"🎯 Prompt completed for user {user_id} ({prompt_duration:.1f}s): {combined_text[:100]}...")
-        
-        # Clean up prompt state
-        self.user_prompt_transcriptions[user_id] = []
-        self.user_prompt_finalizing[user_id] = False
-        if user_id in self.user_prompt_start:
-            del self.user_prompt_start[user_id]
