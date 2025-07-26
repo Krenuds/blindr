@@ -1,11 +1,67 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 13:31:46
+Generated on: 2025-07-26 13:56:06
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 327e62ff
+### 1. Commit: c7c9f346
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 13:37:17 -0400
+- **Subject:** docs: enhance architecture with 3-way classification and rename tts to piper - UNTESTED
+
+**Full Commit Message:**
+```
+docs: enhance architecture with 3-way classification and rename tts to piper - UNTESTED
+```
+
+---
+
+### 2. Commit: dd0fc05d
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 13:32:29 -0400
+- **Subject:** docs: final prep for LLM integration - architecture and package planning
+
+**Full Commit Message:**
+```
+docs: final prep for LLM integration - architecture and package planning
+
+## Updated Architecture Documentation
+- Cleaned up CLAUDE.md with simplified flow diagram
+- Defined complete LLM integration stack: DistilBERT → LangChain → LiteLLM → Ollama
+- Streamlined architecture representation for better clarity
+
+## Key Components Defined:
+- **DistilBERT**: Intent classification (conversational vs agentic)
+- **LangChain**: Prompt templates and chain orchestration
+- **LiteLLM**: Unified model routing with OpenAI-compatible API
+- **Ollama**: Model hosting (Llama 3.2 3B + Qwen 2.5-Coder 7B)
+
+## Package Structure Updated:
+```
+src/llm/
+├── client.py       # LiteLLM client for model routing
+├── classifier.py   # DistilBERT intent classification
+└── chains.py       # LangChain prompt templates and chains
+```
+
+## Architecture Benefits:
+- Minimal complexity approach avoiding unnecessary microservices
+- Clean domain separation within bot process
+- Foundation ready for production LLM integration
+
+Ready to begin Phase 3: LLM package implementation with modern AI stack.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 3. Commit: 327e62ff
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:12:51 -0400
@@ -47,7 +103,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: edae4eb8
+### 4. Commit: edae4eb8
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 12:21:32 -0400
@@ -121,7 +177,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: c422b35e
+### 5. Commit: c422b35e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 11:56:10 -0400
@@ -173,113 +229,6 @@ breaking the 292-line class into focused domain components.
 Applied domain-driven design principles successfully, demonstrating how
 "One Responsibility Per Class" creates cleaner, more maintainable code
 while preserving all working functionality.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 4. Commit: a2e9d323
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 11:46:39 -0400
-- **Subject:** cleanup: Remove accidentally created remove_comments.py script
-
-**Full Commit Message:**
-```
-cleanup: Remove accidentally created remove_comments.py script
-```
-
----
-
-### 5. Commit: 3d91b159
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 11:46:29 -0400
-- **Subject:** docs: Document domain-driven refactoring plan for Phase 2.5 cleanup
-
-**Full Commit Message:**
-```
-docs: Document domain-driven refactoring plan for Phase 2.5 cleanup
-
-# Simple Domain-Driven Refactoring Plan 🎯
-
-Following the successful VoiceBot class pattern, apply the same clean organization
-to remaining components in preparation for Phase 3 LLM integration.
-
-## 🎨 Learning Goal: "One Responsibility Per Class"
-
-Just like how VoiceBot now handles **only** Discord voice operations,
-give each component a single, clear job.
-
-## 📋 Step-by-Step Refactoring
-
-### Step 1: Clean Up StreamingAudioSink
-*Problem*: 418-line monster class doing too many jobs
-*Solution*: Break into focused classes
-
-```
-StreamingAudioSink (current 418 lines)
-├── AudioProcessor (handle format conversion)
-├── BufferManager (manage user audio buffers)
-├── TimeoutManager (handle speech timeouts)
-└── StreamingAudioSink (coordinate everything)
-```
-
-**Learning Point**: Each class = one domain concept
-
-### Step 2: Organize Whisper Components
-*Problem*: Client and Service mixed concerns
-*Solution*: Clear separation
-
-```
-WhisperDomain/
-├── WhisperService (GPU/CPU model management)
-├── WhisperClient (HTTP communication)
-└── WhisperConfig (shared configuration)
-```
-
-**Learning Point**: Separate "doing work" from "talking to services"
-
-### Step 3: Add Domain Validation
-*Problem*: Configuration scattered everywhere
-*Solution*: Centralized validation
-
-```python
-# Simple domain rules in one place
-class AudioConfig:
-    def validate_timeout(self, timeout):
-        if timeout < 1.0:
-            raise ValueError("Timeout too short for natural speech")
-```
-
-**Learning Point**: Business rules belong in domain classes
-
-## 🎯 What You'll Learn
-
-1. **Single Responsibility**: Each class has one clear job
-2. **Domain Logic**: Business rules stay with the data they govern
-3. **Clean Boundaries**: Easy to see where one concern ends and another begins
-4. **Testing**: Small classes = easy to test individual pieces
-
-## 🚀 Benefits for Phase 3
-
-- **Easy LLM Integration**: Clear places to add new functionality
-- **Better Error Handling**: Know exactly which component failed
-- **Simple Testing**: Test each piece independently
-- **Maintainable Code**: Changes in one area don't break others
-
-## 📝 Implementation Approach
-
-1. **Extract small classes first** (AudioProcessor)
-2. **Test each extraction** (make sure voice pipeline still works)
-3. **Move configuration together** (consolidate related settings)
-4. **Clean up imports** (remove what's no longer needed)
-
-This keeps the working voice-to-text pipeline intact while creating a foundation
-that's ready for microservices later\!
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

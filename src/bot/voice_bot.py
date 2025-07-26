@@ -4,7 +4,7 @@ import asyncio
 from dotenv import load_dotenv
 import discord
 from discord.ext import commands
-from .audio_processing import StreamingAudioSink
+from ..audio import DiscordAudioSink
 from ..whisper import WhisperClient
 from ..config import get_streaming_config
 
@@ -136,7 +136,7 @@ class VoiceBot:
         """Create and configure the audio processing sink."""
         bot_event_loop = asyncio.get_event_loop()
         config = get_streaming_config()
-        return StreamingAudioSink(self.whisper_client, bot_event_loop, config)
+        return DiscordAudioSink(self.whisper_client, bot_event_loop, config)
 
     def setup_transcription_handler(self, audio_sink, channel):
         """Setup the transcription handler for the audio sink."""
