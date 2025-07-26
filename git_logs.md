@@ -1,11 +1,47 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 06:47:03
+Generated on: 2025-07-26 07:06:47
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: e432e0ac
+### 1. Commit: e26f21f3
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 07:03:47 -0400
+- **Subject:** fix: Replace broken packet-based silence detection with time-based detection
+
+**Full Commit Message:**
+```
+fix: Replace broken packet-based silence detection with time-based detection
+
+## Critical Bug Fix:
+Discord only sends audio packets during speech (built-in VAD), so our
+packet-based silence detection never triggered, causing 157s delays.
+
+## Changes:
+- Remove broken 'else' block in write() that waited for silence packets
+- Add time-based timeout detection using background asyncio tasks
+- Track user_last_packet_time and user_timeout_tasks
+- Cancel/restart timeout tasks on new speech packets
+- Process accumulated prompts after 2s timeout (configurable)
+- Add proper timeout_handler() and finalize_prompt() methods
+
+## Expected Result:
+- Consistent 2-3 second response times instead of minutes
+- Proper silence detection regardless of background noise
+- No more indefinite prompt accumulation
+
+This fixes the fundamental architectural flaw in silence detection.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: e432e0ac
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:39:04 -0400
@@ -29,7 +65,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 82c8ee89
+### 3. Commit: 82c8ee89
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:28:08 -0400
@@ -53,7 +89,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 0c5a71c9
+### 4. Commit: 0c5a71c9
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:24:48 -0400
@@ -77,7 +113,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: e235c345
+### 5. Commit: e235c345
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:16:19 -0400
@@ -93,27 +129,6 @@ feat: Improve clear commands with bulk delete and add clearall
 - For channels >1000 messages, clearall uses clone/delete method
 - Update help text to include both clear commands
 - Fix Discord rate limiting issues during message deletion
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: fbfb033d
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 06:11:05 -0400
-- **Subject:** feat: Add !clear command and remove Discord mentions from transcriptions
-
-**Full Commit Message:**
-```
-feat: Add !clear command and remove Discord mentions from transcriptions
-
-- Added !clear command to delete all transcription messages from channel
-- Replace Discord mentions (@user) with display names to avoid pings
-- Updated help text to include new !clear command
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

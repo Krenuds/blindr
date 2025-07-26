@@ -235,22 +235,21 @@ class StreamingAudioSink(discord.sinks.Sink):
             if result and result.get('text'):
                 transcribed_text = result['text'].strip()
                 if transcribed_text:
-                    # Merge with previous transcription if needed
-                    final_text = await self.merge_transcriptions(user_id, transcribed_text)
-                    
-                    # In prompt mode, accumulate transcriptions
+                    # In prompt mode, accumulate raw transcriptions without merging
                     if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False):
                         if user_id not in self.user_prompt_transcriptions:
                             self.user_prompt_transcriptions[user_id] = []
-                        self.user_prompt_transcriptions[user_id].append(final_text)
-                        logger.info(f"📝 Accumulated prompt segment for user {user_id}: {final_text}")
+                        self.user_prompt_transcriptions[user_id].append(transcribed_text)
+                        logger.info(f"📝 Accumulated prompt segment for user {user_id}: {transcribed_text}")
                     else:
+                        # In continuous mode, merge with previous transcription to handle overlap
+                        final_text = await self.merge_transcriptions(user_id, transcribed_text)
                         # Send transcription to Discord channel
                         await self.send_transcription(user_id, final_text, duration)
                         logger.info(f"✅ Transcribed for user {user_id}: {final_text}")
-                    
-                    # Store for next merge
-                    self.user_last_transcription[user_id] = transcribed_text
+                        
+                        # Store for next merge
+                        self.user_last_transcription[user_id] = transcribed_text
                 else:
                     logger.debug(f"Empty transcription result for user {user_id}")
             else:
