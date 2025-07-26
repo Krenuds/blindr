@@ -1,11 +1,36 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 15:49:54
+Generated on: 2025-07-26 15:50:56
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: d05a1bfa
+### 1. Commit: 3b1ff577
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 15:50:05 -0400
+- **Subject:** revert: rollback to pre-refactor state with working domain structure - UNTESTED
+
+**Full Commit Message:**
+```
+revert: rollback to pre-refactor state with working domain structure - UNTESTED
+
+Rolled back to commit c7c9f34 to restore the working domain-based package structure
+before the failed audio-centric refactor attempt. This gives us a clean foundation
+to make architectural decisions.
+
+Current state:
+- src/bot/ contains working audio processing and Discord bot
+- src/whisper/ contains speech-to-text service and client
+- src/config/ contains configuration management
+- src/audio/ exists but is unused (from failed refactor)
+
+Ready to decide on proper audio separation approach.
+```
+
+---
+
+### 2. Commit: d05a1bfa
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 15:15:20 -0400
@@ -22,7 +47,7 @@ for cross-thread coroutine execution.
 
 ---
 
-### 2. Commit: ff6ae117
+### 3. Commit: ff6ae117
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 15:12:06 -0400
@@ -48,7 +73,7 @@ being broken into separate messages for each audio segment.
 
 ---
 
-### 3. Commit: 8ec6ce4c
+### 4. Commit: 8ec6ce4c
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:40:28 -0400
@@ -67,7 +92,7 @@ preventing the race condition that was stopping transcriptions from processing.
 
 ---
 
-### 4. Commit: 3f2f4372
+### 5. Commit: 3f2f4372
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:21:17 -0400
@@ -107,53 +132,6 @@ from ever executing and processing buffered audio for transcription.
 ## Ready For
 - End-to-end voice transcription testing with real speech input
 - LLM integration phase with working audio → text pipeline
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 30bbe2db
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 14:08:42 -0400
-- **Subject:** fix: resolve audio processing errors in reorganized architecture - TESTED ✅
-
-**Full Commit Message:**
-```
-fix: resolve audio processing errors in reorganized architecture - TESTED ✅
-
-## Audio Processing Fixes
-Fixed critical runtime errors in the Discord audio interface after domain reorganization.
-
-## Issues Resolved:
-1. **User ID Extraction**: Fixed `'int' object has no attribute 'id'` error
-   - Added proper handling: `user_id = user.id if hasattr(user, "id") else user`
-   - Matches original Discord.py behavior
-
-2. **Buffer Manager Integration**: Fixed method signature mismatches
-   - Updated `add_audio_chunk()` calls to include `current_time` parameter
-   - Fixed `_process_user_timeout()` to use `clear_user_buffer()` correctly
-
-3. **Timeout Handler**: Implemented proper async timeout pattern
-   - Added `_timeout_handler()` coroutine for speech segmentation
-   - Maintains original timeout logic for VAD-based processing
-
-4. **Import Dependencies**: Made Whisper service import optional
-   - Bot can run in client-only mode when torch not available
-   - Graceful degradation for development environments
-
-## Testing Results:
-✅ Bot connects to Discord successfully
-✅ Joins voice channel without errors
-✅ Audio processing pipeline initializes correctly
-✅ No runtime errors in audio write operations
-
-## Ready For:
-- Voice transcription testing with Whisper service
-- End-to-end audio → transcription → Discord workflow
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
