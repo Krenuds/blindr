@@ -241,10 +241,12 @@ class TimeoutManager:
             self.user_timeout_tasks[user_id].cancel()
             self.user_timeout_tasks.pop(user_id, None)
 
+        logger.debug(f"Scheduling timeout for user {user_id}, duration {timeout_duration}s")
         future = asyncio.run_coroutine_threadsafe(
             handler_coroutine, self.bot_event_loop
         )
         self.user_timeout_tasks[user_id] = future
+        logger.debug(f"Timeout scheduled for user {user_id}, future: {future}")
 
     def cancel_timeout(self, user_id: int):
         """Cancel timeout for a specific user."""

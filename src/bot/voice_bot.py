@@ -9,11 +9,23 @@ from ..whisper import WhisperClient
 from ..config import get_streaming_config
 
 load_dotenv()
+
+# Ensure logs directory exists - handle both relative and absolute paths
+log_file = os.getenv("LOG_FILE", "logs/bot.log")
+if not os.path.isabs(log_file):
+    # Make relative paths relative to the project root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    log_file = os.path.join(project_root, log_file)
+
+log_dir = os.path.dirname(log_file)
+if log_dir and not os.path.exists(log_dir):
+    os.makedirs(log_dir, exist_ok=True)
+
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(os.getenv("LOG_FILE", "logs/bot.log")),
+        logging.FileHandler(log_file),
         logging.StreamHandler(),
     ],
 )
