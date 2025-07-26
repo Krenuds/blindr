@@ -12,7 +12,7 @@ def get_git_context():
     """Get latest 3 commits from git logs"""
     try:
         # Generate git logs
-        subprocess.run(['makeGitLogs', '10'], check=True, capture_output=True)
+        subprocess.run(['makeGitLogs', '5'], check=True, capture_output=True)
         
         # Read and parse the git_logs.md file
         if os.path.exists('git_logs.md'):
