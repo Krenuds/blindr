@@ -22,18 +22,16 @@ def get_streaming_config() -> Dict[str, Any]:
     """Get configuration for StreamingAudioSink"""
     config = load_audio_config()
     
-    # Merge audio_processing and prompt_mode configs
+    # Trust Discord VAD configuration
     streaming_config = {
-        'energy_threshold': config['audio_processing']['energy_threshold'],
+        'trust_discord_vad': config['audio_processing'].get('trust_discord_vad', True),
         'buffer_duration': config['audio_processing']['buffer_duration'],
         'sample_rate': 48000,  # Discord's native sample rate
         'silence_timeout': config['audio_processing']['silence_timeout'],
+        'segment_timeout': config['audio_processing'].get('segment_timeout', 2.0),
         'max_buffer_size': config['audio_processing']['max_buffer_size'],
         'min_speech_duration': config['audio_processing']['min_speech_duration'],
         'overlap_duration': config['audio_processing']['overlap_duration'],
-        'prompt_mode': config['prompt_mode']['enabled'],
-        'prompt_silence_timeout': config['prompt_mode']['silence_timeout'],
-        'prompt_max_duration': config['prompt_mode']['max_duration'],
     }
     
     return streaming_config
@@ -43,7 +41,3 @@ def get_whisper_config() -> Dict[str, Any]:
     config = load_audio_config()
     return config['whisper']
 
-def get_experimental_config() -> Dict[str, Any]:
-    """Get experimental configuration options"""
-    config = load_audio_config()
-    return config['experimental']
