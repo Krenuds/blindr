@@ -38,11 +38,12 @@ class StreamingAudioSink(discord.sinks.Sink):
         # Default configuration based on brodan's approach
         self.config = {
             'energy_threshold': 50,          # Energy-based VAD threshold
-            'buffer_duration': 3.0,          # Seconds of audio per segment
+            'buffer_duration': 5.0,          # Seconds of audio per segment (increased for better context)
             'sample_rate': 48000,            # Discord's native sample rate
-            'silence_timeout': 1.0,          # Seconds of silence before processing
-            'max_buffer_size': 8.0,          # Maximum buffer size in seconds
-            'min_speech_duration': 0.5,      # Minimum speech duration to process
+            'silence_timeout': 0.5,          # Seconds of silence before processing (reduced for faster response)
+            'max_buffer_size': 10.0,         # Maximum buffer size in seconds
+            'min_speech_duration': 0.3,      # Minimum speech duration to process (reduced)
+            'overlap_duration': 0.5,         # Seconds of audio to keep for overlap between buffers
         }
         
         if config:
@@ -53,6 +54,8 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.user_last_activity: Dict[int, float] = {}
         self.user_speech_start: Dict[int, float] = {}
         self.processing_locks: Dict[int, bool] = {}
+        self.user_overlap_buffers: Dict[int, bytes] = {}  # Store overlap audio for continuity
+        self.user_last_transcription: Dict[int, str] = {}  # Store last transcription for merging
         
         logger.info(f"StreamingAudioSink initialized with config: {self.config}")
     
@@ -185,9 +188,15 @@ class StreamingAudioSink(discord.sinks.Sink):
             if result and result.get('text'):
                 transcribed_text = result['text'].strip()
                 if transcribed_text:
+                    # Merge with previous transcription if needed
+                    final_text = await self.merge_transcriptions(user_id, transcribed_text)
+                    
                     # Send transcription to Discord channel
-                    await self.send_transcription(user_id, transcribed_text, duration)
-                    logger.info(f"✅ Transcribed for user {user_id}: {transcribed_text}")
+                    await self.send_transcription(user_id, final_text, duration)
+                    logger.info(f"✅ Transcribed for user {user_id}: {final_text}")
+                    
+                    # Store for next merge
+                    self.user_last_transcription[user_id] = transcribed_text
                 else:
                     logger.debug(f"Empty transcription result for user {user_id}")
             else:
@@ -195,6 +204,42 @@ class StreamingAudioSink(discord.sinks.Sink):
             
         except Exception as e:
             logger.error(f"Audio processing error for user {user_id}: {e}")
+    
+    async def merge_transcriptions(self, user_id: int, new_text: str) -> str:
+        """
+        Merge new transcription with previous to handle overlap.
+        Removes duplicate words at the boundary.
+        """
+        if user_id not in self.user_last_transcription:
+            return new_text
+        
+        last_text = self.user_last_transcription[user_id]
+        if not last_text:
+            return new_text
+        
+        # Split into words
+        last_words = last_text.split()
+        new_words = new_text.split()
+        
+        if not last_words or not new_words:
+            return new_text
+        
+        # Find overlap by checking if end of last matches beginning of new
+        overlap_found = False
+        for i in range(min(len(last_words), len(new_words))):
+            # Check if last i words of previous match first i words of new
+            if i > 0 and last_words[-i:] == new_words[:i]:
+                # Remove the overlapping words from the beginning of new text
+                merged_words = new_words[i:]
+                overlap_found = True
+                logger.debug(f"Found {i} word overlap for user {user_id}")
+                break
+        
+        if overlap_found and merged_words:
+            return ' '.join(merged_words)
+        else:
+            # No overlap found, return as is
+            return new_text
     
     async def send_transcription(self, user_id: int, text: str, duration: float):
         """
@@ -223,6 +268,18 @@ class StreamingAudioSink(discord.sinks.Sink):
             
             # Combine buffer chunks into single audio segment
             audio_segment = b''.join(buffer)
+            
+            # Calculate overlap samples to keep
+            overlap_samples = int(self.config['overlap_duration'] * self.config['sample_rate'] * 2)  # 2 bytes per sample
+            
+            # Store overlap for next buffer (last part of current buffer)
+            if len(audio_segment) > overlap_samples:
+                self.user_overlap_buffers[user_id] = audio_segment[-overlap_samples:]
+            
+            # Prepend previous overlap if exists
+            if user_id in self.user_overlap_buffers:
+                audio_segment = self.user_overlap_buffers[user_id] + audio_segment
+            
             buffer.clear()
             
             # Reset speech start time
@@ -343,6 +400,8 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.user_last_activity.clear()
         self.user_speech_start.clear()
         self.processing_locks.clear()
+        self.user_overlap_buffers.clear()
+        self.user_last_transcription.clear()
         
         logger.info("StreamingAudioSink cleanup complete")
     
