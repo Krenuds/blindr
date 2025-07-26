@@ -30,6 +30,7 @@ def get_streaming_config() -> Dict[str, Any]:
         'silence_timeout': config['audio_processing']['silence_timeout'],
         'segment_timeout': config['audio_processing'].get('segment_timeout', 2.0),
         'max_buffer_size': config['audio_processing']['max_buffer_size'],
+        'force_process_threshold': config['audio_processing'].get('force_process_threshold', 8.0),
         'min_speech_duration': config['audio_processing']['min_speech_duration'],
         'overlap_duration': config['audio_processing']['overlap_duration'],
     }
