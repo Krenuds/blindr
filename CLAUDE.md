@@ -9,8 +9,7 @@ The user is that you tutor them as they learn about AI models and MCP. Please ta
 **CRITICAL RULES**
 
 - Always consult online documentation for each module while planning. 
-- Test all code after finishing each task before moving on by reading the docker logs. 
-- When completing a task, git commit with detailed comment.
+- Test all code after finishing each task before moving on by reading the service logs.  
 - All models are running locally. Either via docker or as system services.
 
 **PROJECT OVERVIEW** 
@@ -28,7 +27,7 @@ graph TB
 
     %% Bot Layer
     subgraph "Bot Service"
-        Bot["🤖 Discord Bot<br/>Python 3.9+<br/>discord.py<br/>Built-in Opus Decoder"]
+        Bot["🤖 Discord Bot<br/>Python 3.12+<br/>py-cord<br/>AudioSink Voice Recording"]
     end
 
     %% API Gateway Layer
@@ -38,7 +37,7 @@ graph TB
 
     %% Speech Processing Layer
     subgraph "Speech Processing"
-        Whisper["🎤 Whisper STT<br/>Docker Container<br/>Port: 9000"]
+        Whisper["🎤 Whisper STT<br/>Native Service<br/>Port: 9000"]
         Piper["🔊 Piper TTS<br/>Docker Container<br/>Port: 10200"]
     end
 

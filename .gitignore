@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/*.log
+
+# Audio Files (temporary/test files)
+*.wav
+*.mp3
+*.mp4
+*.m4a
+*.flac
+*.ogg
+
+# Recorded Audio (keep directory structure but ignore content)
+recorded_audio/*
+!recorded_audio/.gitkeep
+
+# Docker
+.docker/
+
+# Package files
+*.deb
+*.rpm
+*.pkg
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Cache
+.cache/
+*.cache
+
+# Generated files
+git_logs.md

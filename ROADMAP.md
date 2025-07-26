@@ -57,10 +57,10 @@ Build and test each component in isolation, then integrate step by step. Start w
 **Goal**: Convert captured audio to text
 
 ### Week 3-4: Whisper Setup
-- [ ] Deploy Whisper in Docker container
-- [ ] Set up REST API endpoint (port 9000)
-- [ ] Test Whisper with saved audio files
-- [ ] Optimize model size (base vs small vs medium)
+- [x] Deploy Whisper as native service (faster-whisper with GPU)
+- [x] Set up REST API endpoint (port 9000)
+- [x] Test Whisper with saved audio files
+- [ ] Optimize model size (currently using tiny model)
 
 ### Week 4-5: Bot-to-Whisper Pipeline
 - [ ] Connect bot to Whisper API
