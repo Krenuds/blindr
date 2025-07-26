@@ -30,6 +30,7 @@ bot = commands.Bot(command_prefix=os.getenv('BOT_PREFIX', '!'), intents=intents)
 # Streaming state management
 connections = {}
 streaming_sinks = {}
+transcription_enabled = True  # Global flag to toggle transcription
 
 # Initialize Whisper client
 whisper_client = WhisperClient(os.getenv('WHISPER_URL', 'http://localhost:9000'))
@@ -79,6 +80,10 @@ async def start_streaming(guild_id: int, channel):
         # Override the send_transcription method to send to Discord
         async def send_transcription_to_discord(user_id: int, text: str, duration: float):
             try:
+                # Check if transcription is enabled
+                if not transcription_enabled:
+                    return
+                    
                 # Prefer 'transcriptions' channel if it exists, otherwise use first available
                 text_channel = None
                 
@@ -141,164 +146,49 @@ async def on_voice_state_update(member, before, after):
         logger.warning('Bot was disconnected from voice channel, attempting to reconnect and restart streaming...')
         await join_voice_channel_and_start_streaming()
 
-@bot.command(name='status')
-async def status_command(ctx):
-    """Bot status command - proof of concept"""
-    voice_status = "❌ Not connected to voice"
-    streaming_status = "❌ Not streaming"
-    
-    if hasattr(bot, 'voice_client_ref') and bot.voice_client_ref and bot.voice_client_ref.is_connected():
-        channel_name = bot.voice_client_ref.channel.name
-        voice_status = f"🔊 Connected to #{channel_name}"
-    
-    if ctx.guild.id in connections and connections[ctx.guild.id].is_recording():
-        streaming_status = "🎤 Continuous streaming active"
-        
-        # Get streaming sink status if available
-        if ctx.guild.id in streaming_sinks:
-            sink_status = streaming_sinks[ctx.guild.id].get_status()
-            active_users = sink_status['active_users']
-            if active_users > 0:
-                streaming_status += f" ({active_users} users)"
-    
-    embed = discord.Embed(
-        title="AI Voice Bot - Status",
-        description="Discord bot with voice capture capabilities",
-        color=0x00ff00
-    )
-    embed.add_field(
-        name="Commands",
-        value="!status - Show bot status\n!stream_info - Show streaming details\n!transcribe - Test Whisper service\n!clear - Clear transcription messages (fast)\n!clearall - Clear entire channel (requires confirmation)",
-        inline=False
-    )
-    embed.add_field(
-        name="Voice Status",
-        value=voice_status,
-        inline=False
-    )
-    embed.add_field(
-        name="Streaming Status",
-        value=streaming_status,
-        inline=False
-    )
-    embed.add_field(
-        name="Phase Progress",
-        value="✅ Phase 1: Voice channel connection\n✅ Phase 1: Audio capture implementation\n✅ Phase 2: Whisper integration (voice-to-text)\n🎤 Phase 2: Continuous streaming with VAD",
-        inline=False
-    )
-    await ctx.send(embed=embed)
 
-@bot.command(name='stream_info')
-async def stream_info_command(ctx):
-    """Show detailed streaming information."""
-    if ctx.guild.id not in streaming_sinks:
-        await ctx.send("❌ No streaming sink active in this server!")
-        return
-    
-    try:
-        sink_status = streaming_sinks[ctx.guild.id].get_status()
-        
-        embed = discord.Embed(
-            title="🎤 Streaming Audio Status",
-            description="Continuous voice-to-text streaming details",
-            color=0x00ff00
-        )
-        
-        embed.add_field(
-            name="Active Users",
-            value=f"{sink_status['active_users']} users being processed",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="Configuration",
-            value=f"Energy Threshold: {sink_status['config']['energy_threshold']}\n"
-                  f"Buffer Duration: {sink_status['config']['buffer_duration']}s\n"
-                  f"Sample Rate: {sink_status['config']['sample_rate']}Hz",
-            inline=False
-        )
-        
-        if sink_status['users']:
-            user_info = []
-            for user_id, info in sink_status['users'].items():
-                user_info.append(
-                    f"<@{user_id}>: {info['buffer_duration']}s buffered, "
-                    f"last activity {info['last_activity_ago']}s ago"
-                )
-            
-            embed.add_field(
-                name="User Details",
-                value="\n".join(user_info[:5]),  # Limit to 5 users to avoid message length issues
-                inline=False
-            )
-        
-        await ctx.send(embed=embed)
-        
-    except Exception as e:
-        logger.error(f"Failed to get stream info: {e}")
-        await ctx.send(f"❌ Failed to get stream info: {str(e)}")
 
 
 @bot.command(name='transcribe')
-async def transcribe_command(ctx, *, message: str = None):
-    """Test Whisper transcription service."""
-    if message:
-        # If user provides a message, just echo it back (for testing)
-        await ctx.send(f"🎤 You said: {message}")
-        return
+async def transcribe_command(ctx):
+    """Toggle voice transcription on/off."""
+    global transcription_enabled
     
-    # Test Whisper service connection
-    try:
-        await ctx.send("🔄 Testing Whisper service connection...")
-        
-        # Simple test - this will test the Whisper service is responsive
-        test_text = "Whisper service test successful"
-        await ctx.send(f"✅ **Whisper Service**: {test_text}")
-        await ctx.send("💡 The bot is continuously transcribing voice in real-time. Just speak in the voice channel!")
-            
-    except Exception as e:
-        logger.error(f"Whisper service test error: {e}")
-        await ctx.send(f"❌ Whisper service test failed: {str(e)}")
+    # Toggle the state
+    transcription_enabled = not transcription_enabled
+    
+    status = "🔊 ON" if transcription_enabled else "🔇 OFF"
+    emoji = "✅" if transcription_enabled else "❌"
+    
+    embed = discord.Embed(
+        title=f"{emoji} Transcription {status}",
+        description=f"Voice transcription is now **{status}**",
+        color=0x00ff00 if transcription_enabled else 0xff0000
+    )
+    
+    if transcription_enabled:
+        embed.add_field(
+            name="📢 Active",
+            value="Voice messages will be transcribed to Discord",
+            inline=False
+        )
+    else:
+        embed.add_field(
+            name="🤫 Disabled",
+            value="Voice messages will not be transcribed",
+            inline=False
+        )
+    
+    embed.add_field(
+        name="Commands",
+        value="!transcribe - Toggle transcription on/off\n!clearall - Clear entire channel (requires confirmation)",
+        inline=False
+    )
+    
+    await ctx.send(embed=embed)
+    logger.info(f"Transcription toggled to: {transcription_enabled}")
 
 
-@bot.command(name='clear')
-async def clear_command(ctx):
-    """Clear all transcription messages from the transcriptions channel using bulk delete."""
-    try:
-        # Check if command is in the transcriptions channel
-        if ctx.channel.name.lower() != 'transcriptions':
-            # Look for transcriptions channel
-            transcriptions_channel = discord.utils.get(ctx.guild.text_channels, name='transcriptions')
-            if not transcriptions_channel:
-                await ctx.send("❌ No 'transcriptions' channel found!")
-                return
-        else:
-            transcriptions_channel = ctx.channel
-        
-        # Check bot permissions
-        if not transcriptions_channel.permissions_for(ctx.guild.me).manage_messages:
-            await ctx.send("❌ I don't have permission to manage messages in the transcriptions channel!")
-            return
-        
-        # Send progress message
-        progress_msg = await ctx.send("🔄 Clearing transcription messages...")
-        
-        # Define check function to filter transcription messages
-        def is_transcription(msg):
-            return msg.author == bot.user and msg.content.startswith("🎤")
-        
-        # Use purge with the check function - this uses bulk delete API
-        deleted = await transcriptions_channel.purge(limit=1000, check=is_transcription)
-        
-        # Update progress message with result
-        await progress_msg.edit(content=f"✅ Cleared {len(deleted)} transcription messages from #{transcriptions_channel.name}")
-        logger.info(f"Cleared {len(deleted)} transcription messages from #{transcriptions_channel.name}")
-        
-    except discord.Forbidden:
-        await ctx.send("❌ I don't have permission to delete messages!")
-    except Exception as e:
-        logger.error(f"Failed to clear transcriptions: {e}")
-        await ctx.send(f"❌ Failed to clear transcriptions: {str(e)}")
 
 
 @bot.command(name='clearall')

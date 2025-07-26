@@ -1,11 +1,35 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 06:12:49
+Generated on: 2025-07-26 06:22:43
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: fbfb033d
+### 1. Commit: e235c345
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 06:16:19 -0400
+- **Subject:** feat: Improve clear commands with bulk delete and add clearall
+
+**Full Commit Message:**
+```
+feat: Improve clear commands with bulk delete and add clearall
+
+- Replace slow individual deletion with Discord's bulk delete API
+- \!clear now uses channel.purge() for instant deletion (100 msgs at once)
+- Add \!clearall command to clear entire channel with confirmation
+- For channels >1000 messages, clearall uses clone/delete method
+- Update help text to include both clear commands
+- Fix Discord rate limiting issues during message deletion
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: fbfb033d
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:11:05 -0400
@@ -26,7 +50,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: e4c33840
+### 3. Commit: e4c33840
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:00:16 -0400
@@ -39,7 +63,7 @@ Update git logs
 
 ---
 
-### 3. Commit: 7065cc4e
+### 4. Commit: 7065cc4e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 05:57:16 -0400
@@ -75,7 +99,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: 7e6b3649
+### 5. Commit: 7e6b3649
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 23:05:39 -0400
@@ -110,19 +134,6 @@ perfect for complex prompts that will be sent to LLMs for processing.
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 5310afc6
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 22:46:17 -0400
-- **Subject:** Update CLAUDE.md with PROJECT SETUP section and add numpy to requirements.txt
-
-**Full Commit Message:**
-```
-Update CLAUDE.md with PROJECT SETUP section and add numpy to requirements.txt
 ```
 
 ---
