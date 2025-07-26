@@ -1,0 +1,62 @@
+3f2f437 fix: resolve timeout scheduling race condition in Discord VAD processing - TESTED ✅
+30bbe2d fix: resolve audio processing errors in reorganized architecture - TESTED ✅
+2028b8f refactor: reorganize into audio-centric domain architecture - UNTESTED
+c7c9f34 docs: enhance architecture with 3-way classification and rename tts to piper - UNTESTED
+dd0fc05 docs: final prep for LLM integration - architecture and package planning
+327e62f update architecture and test refactored codebase - READY ✅
+edae4eb refactor: Reorganize codebase into domain-based packages - NEEDS TESTING ⚠️
+c422b35 refactor: Extract domain classes from StreamingAudioSink for improved separation of concerns
+a2e9d32 cleanup: Remove accidentally created remove_comments.py script
+3d91b15 docs: Document domain-driven refactoring plan for Phase 2.5 cleanup
+fdc6eaa refactor: Restructure bot.py with VoiceBot class for improved readability
+bb4e586 cleanup: Remove unused vad_processor.py
+927b3f7 roadmap: Mark Phase 2 Speech-to-Text Integration as COMPLETE ✅
+27ba8fb feat: Implement sink-level aggregation for complete speech transcription
+53e85ba Updated roadmap and deleted unused files
+e7f5106 fix: Complete race condition fix by replacing all unsafe dict deletions with pop()
+95b5130 fix: Replace unsafe dict deletion with pop() to prevent KeyError in timeout cleanup
+7b1c3f7 Cleaning up unused files
+a144e5b analysis: Document timeout handler failure and delayed Discord posting issue
+5bc25d9 doc: Document critical audio buffer and duplication issues found in testing
+897ef05 fix: Remove remaining energy_threshold references from config loader
+f29ab23 feat: Implement "Trust Discord VAD" approach for better segmentation
+22ccf00 refactor: Remove all bandaid fixes and prepare for VAD-first approach
+95d3d42 wip: Document failed attempts to fix context bleeding - made things worse
+5cc533e fix: Prevent audio context bleeding between separate prompts
+3c4aa79 fix: Resolve Whisper hallucination issues causing duplicate text
+01d812e fix: Remove duplicate finalize_prompt method causing transcription issues
+9b30683 fix: Remove duplicate words in prompt mode transcriptions
+e26f21f fix: Replace broken packet-based silence detection with time-based detection
+e432e0a feat: Add members intent for efficient username resolution
+82c8ee8 fix: Improve username lookup for transcriptions
+0c5a71c feat: Simplify commands and add transcription toggle
+e235c34 feat: Improve clear commands with bulk delete and add clearall
+fbfb033 feat: Add !clear command and remove Discord mentions from transcriptions
+e4c3384 Update git logs
+7065cc4 fix: Resolve Whisper hallucination issues causing duplicate text
+7e6b364 feat: Implement prompt mode for 30-second voice inputs 🎙️
+5310afc Update CLAUDE.md with PROJECT SETUP section and add numpy to requirements.txt
+16ffa76 Update ROADMAP.md with Phase 2 performance optimization milestone
+d259be8 Optimize: Implement overlap buffer strategy for seamless transcription 🎯
+004299c Fix: Discord voice transcription pipeline now working\! 🎉
+96f8799 Testing: Prepare Phase 2 for live Discord validation
+ca2b955 Complete ## Phase 2: Speech-to-Text Integration 🎤
+b9ee97d Cleanup: Complete Phase 2 and prepare for Phase 3
+577644b Implement: Continuous audio streaming with real-time transcription
+17d9e02 Update: Complete Whisper integration and enhance transcription features
+83f0e99 Design: Add streaming audio architecture plan using brodan approach
+50f247c Add remaining project files and update tracking
+741ac46 Security: Remove Discord bot token and improve env file handling
+3cd2b1c Clean up repository and update documentation
+21c1de8 Complete ## Phase 1: Discord Foundation 🎮 (COMPLETED ✅)
+a1173b8 Update roadmap: Phase 1 Discord Foundation COMPLETE
+100cd47 Phase 1 Complete: Voice Capture Implementation
+c0d2f49 Update roadmap to reflect completed Phase 1 tasks
+f3ccb38 Phase 1: Automatic Voice Channel Integration
+02f5a65 Phase 1 Foundation: Basic Discord Bot Setup
+d9966f4 Simplify UserPromptSubmit hook - Remove roadmap auto-injection
+38f0402 Add Documentation Checking Hook (PreToolUse)
+1beccc4 Correct Phase 1 tasks to uncompleted state
+2af29f4 Complete Project Infrastructure & Clean Up Roadmap
+9d636c7 Complete ## Phase 1: Discord Foundation 🎮
+908a71b Initial commit: Fresh start for BLINDR Discord AI voice bot

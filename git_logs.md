@@ -1,11 +1,59 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 14:20:41
+Generated on: 2025-07-26 14:36:45
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 30bbe2db
+### 1. Commit: 3f2f4372
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 14:21:17 -0400
+- **Subject:** fix: resolve timeout scheduling race condition in Discord VAD processing - TESTED ✅
+
+**Full Commit Message:**
+```
+fix: resolve timeout scheduling race condition in Discord VAD processing - TESTED ✅
+
+## Problem Identified
+The audio streaming would start but never properly process speech segments due to a
+timeout scheduling race condition. Timeouts were being scheduled on every Discord
+audio packet instead of once per speech segment, preventing the timeout handlers
+from ever executing and processing buffered audio for transcription.
+
+## Root Cause
+- Discord VAD sends audio packets continuously during speech
+- Each packet triggered a new timeout schedule via `_handle_discord_vad_timeout()`
+- Previous timeouts were cancelled and replaced before they could complete
+- Result: Audio buffers accumulated but were never sent to Whisper for processing
+
+## Solution Applied
+1. **Single Timeout Per User**: Added check `if user_id not in self.timeout_manager.user_timeout_tasks:`
+   - Prevents scheduling multiple concurrent timeouts for the same user
+   - Allows timeout to complete its full duration and process the audio buffer
+
+2. **Enhanced Debug Logging**: Added detailed timeout lifecycle logging
+   - Track timeout scheduling, sleep duration, and processing decisions
+   - Helps identify timing issues in speech segmentation
+
+## Testing Results
+✅ Audio streaming starts correctly
+✅ Timeouts now execute after speech segments end
+✅ Audio buffers are processed and sent to Whisper
+✅ No more hanging "started streaming" state
+
+## Ready For
+- End-to-end voice transcription testing with real speech input
+- LLM integration phase with working audio → text pipeline
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 30bbe2db
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:08:42 -0400
@@ -52,7 +100,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 2028b8fa
+### 3. Commit: 2028b8fa
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:03:12 -0400
@@ -101,7 +149,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: c7c9f346
+### 4. Commit: c7c9f346
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:37:17 -0400
@@ -114,7 +162,7 @@ docs: enhance architecture with 3-way classification and rename tts to piper - U
 
 ---
 
-### 4. Commit: dd0fc05d
+### 5. Commit: dd0fc05d
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:32:29 -0400
@@ -149,48 +197,6 @@ src/llm/
 - Foundation ready for production LLM integration
 
 Ready to begin Phase 3: LLM package implementation with modern AI stack.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 327e62ff
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 13:12:51 -0400
-- **Subject:** update architecture and test refactored codebase - READY ✅
-
-**Full Commit Message:**
-```
-update architecture and test refactored codebase - READY ✅
-
-## Production Testing Complete
-Comprehensive testing confirms the domain-driven refactoring is production-ready:
-
-### ✅ All Core Systems Verified:
-- **Package Imports**: Clean `src/bot/`, `src/whisper/`, `src/config/` structure working
-- **GPU Whisper Service**: CUDA acceleration operational (GeForce RTX 2080, 7.6GB VRAM)
-- **Discord Integration**: Successfully connects, authenticates, and joins voice channels
-- **Audio Pipeline**: StreamingAudioSink processes real-time audio correctly
-- **Speech Recognition**: Live transcription functional in production environment
-- **Domain Architecture**: Clean separation of concerns maintained
-
-### 🏗️ Architecture Quality:
-- Modern package-based import patterns
-- Reduced complexity with preserved functionality
-- Foundation ready for Phase 3 LLM integration
-- Maintainable domain boundaries established
-
-### 📝 Files Updated:
-- Added modern `main.py` entry point (replaces `run_bot.py`)
-- Updated documentation and git logs
-- Added `/ready` command support
-
-This refactoring transforms a monolithic structure into clean, testable,
-domain-driven packages while maintaining 100% functional compatibility.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

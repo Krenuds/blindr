@@ -236,10 +236,11 @@ class TimeoutManager:
     def schedule_timeout(
         self, user_id: int, timeout_duration: float, handler_coroutine
     ):
-        """Schedule a timeout task for a user, canceling any existing timeout."""
+        """Schedule a timeout task for a user. Does not cancel existing timeouts."""
+        # Don't schedule if one is already active
         if user_id in self.user_timeout_tasks:
-            self.user_timeout_tasks[user_id].cancel()
-            self.user_timeout_tasks.pop(user_id, None)
+            logger.debug(f"Timeout already scheduled for user {user_id}, skipping")
+            return
 
         logger.debug(f"Scheduling timeout for user {user_id}, duration {timeout_duration}s")
         future = asyncio.run_coroutine_threadsafe(

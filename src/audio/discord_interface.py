@@ -107,6 +107,7 @@ class DiscordAudioSink(discord.sinks.Sink):
         """
         try:
             user_id = user.id if hasattr(user, "id") else user
+            logger.debug(f"Received audio packet from user {user_id}, data length: {len(data) if data else 0}")
             
             # Initialize user if needed (BufferManager handles duplicate initialization)
             current_time = time.time()
@@ -122,16 +123,19 @@ class DiscordAudioSink(discord.sinks.Sink):
         """Process incoming Discord audio data."""
         try:
             current_time = time.time()
+            logger.debug(f"Processing audio for user {user_id} at {current_time}")
             
             # Convert Discord audio format
             processed_audio = self.audio_processor.format_audio(audio_data)
             mono_audio = self.audio_processor.stereo_to_mono(processed_audio)
+            logger.debug(f"Converted audio: original={len(audio_data)} bytes, mono={len(mono_audio)} bytes")
             
             # Add to buffer
             self.buffer_manager.add_audio_chunk(user_id, mono_audio, current_time)
             
             # Handle timeout scheduling based on Discord VAD
             if self.config.get("trust_discord_vad", True):
+                logger.debug(f"Handling Discord VAD timeout for user {user_id}")
                 self._handle_discord_vad_timeout(user_id)
                 
         except Exception as e:
@@ -180,6 +184,11 @@ class DiscordAudioSink(discord.sinks.Sink):
             logger.info("DiscordAudioSink cleanup completed")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
+
+    @property
+    def wants_opus(self) -> bool:
+        """We want decoded PCM data, not Opus packets."""
+        return False
 
     def get_stats(self) -> Dict[str, Any]:
         """Get audio processing statistics."""
