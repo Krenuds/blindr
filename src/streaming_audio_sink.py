@@ -1,6 +1,6 @@
 """
 Streaming Audio Sink for continuous Discord voice processing.
-Based on brodan's STTAudioSink approach with energy-based VAD.
+Uses Discord's built-in VAD with timeout-based segmentation.
 """
 
 import asyncio
@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 
 class StreamingAudioSink(discord.sinks.Sink):
     """
-    Continuous audio processing sink with energy-based VAD.
-    Streams audio in buffered segments to Whisper for real-time transcription.
+    Continuous audio processing sink that trusts Discord's built-in VAD.
+    Uses timeout-based segmentation to process speech segments sent by Discord.
+    Discord only sends audio packets during detected speech activity.
     """
     
     def __init__(self, whisper_client, bot_event_loop, config: Optional[Dict[str, Any]] = None):
@@ -35,19 +36,16 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.whisper_client = whisper_client
         self.bot_event_loop = bot_event_loop
         
-        # Default configuration based on brodan's approach
+        # Trust Discord VAD configuration
         self.config = {
-            'energy_threshold': 50,          # Energy-based VAD threshold
-            'buffer_duration': 5.0,          # Seconds of audio per segment (increased for better context)
+            'trust_discord_vad': True,       # Trust Discord's built-in VAD
+            'buffer_duration': 5.0,          # Seconds of audio per segment
             'sample_rate': 48000,            # Discord's native sample rate
-            'silence_timeout': 0.5,          # Seconds of silence before processing (reduced for faster response)
+            'silence_timeout': 1.0,          # Seconds after last packet before processing
+            'segment_timeout': 2.0,          # Longer timeout to complete segments
             'max_buffer_size': 10.0,         # Maximum buffer size in seconds
-            'min_speech_duration': 0.3,      # Minimum speech duration to process (reduced)
+            'min_speech_duration': 0.3,      # Minimum speech duration to process
             'overlap_duration': 0.5,         # Seconds of audio to keep for overlap between buffers
-            # Prompt mode configuration
-            'prompt_mode': False,            # Enable prompt mode for longer inputs
-            'prompt_silence_timeout': 2.0,   # Longer silence timeout for prompts
-            'prompt_max_duration': 30.0,     # Maximum prompt duration in seconds
         }
         
         if config:
@@ -105,35 +103,6 @@ class StreamingAudioSink(discord.sinks.Sink):
         mono_data = self._stereo_to_mono(pcm_data)
         return mono_data
     
-    def calculate_energy(self, audio_data: bytes) -> float:
-        """
-        Calculate audio energy for VAD.
-        Simple energy-based approach from brodan.
-        """
-        try:
-            # Convert bytes to numpy array for energy calculation
-            audio_array = np.frombuffer(audio_data, dtype=np.int16)
-            if len(audio_array) == 0:
-                return 0.0
-            
-            # Calculate RMS energy
-            energy = np.sqrt(np.mean(audio_array.astype(np.float32) ** 2))
-            return float(energy)
-        
-        except Exception as e:
-            logger.debug(f"Energy calculation error: {e}")
-            return 0.0
-    
-    def has_speech(self, audio_data: bytes) -> bool:
-        """
-        Simple energy-based VAD.
-        Returns True if audio contains speech above threshold.
-        """
-        energy = self.calculate_energy(audio_data)
-        has_speech = energy > self.config['energy_threshold']
-        if has_speech:
-            logger.debug(f"Speech detected with energy {energy:.2f} (threshold: {self.config['energy_threshold']})")
-        return has_speech
     
     def pcm_to_wav(self, pcm_data: bytes, sample_rate: int = 48000) -> bytes:
         """
@@ -338,7 +307,9 @@ class StreamingAudioSink(discord.sinks.Sink):
     def write(self, data, user):
         """
         Called by Discord for each audio packet.
-        Implements continuous streaming with buffered processing.
+        
+        Note: Discord only calls this during detected speech activity.
+        We trust Discord's VAD and focus on timeout-based segmentation.
         """
         # Handle both user object and user_id integer
         user_id = user.id if hasattr(user, 'id') else user
@@ -359,19 +330,12 @@ class StreamingAudioSink(discord.sinks.Sink):
         if len(self.user_buffers[user_id]) < 5:
             logger.debug(f"Received audio packet from user {user_id}, size: {len(audio_bytes)} bytes")
         
-        # Apply energy-based VAD
-        if self.has_speech(audio_bytes):
+        # Trust Discord VAD - any packet means speech detected
+        if self.config.get('trust_discord_vad', True):
             # Track when speech started
             if user_id not in self.user_speech_start:
                 self.user_speech_start[user_id] = current_time
-                logger.debug(f"Speech detected for user {user_id}")
-                
-                # Simple prompt mode tracking (if enabled)
-                if self.config.get('prompt_mode', {}).get('enabled', False):
-                    if user_id not in self.user_prompt_active:
-                        self.user_prompt_active[user_id] = True
-                        self.user_prompt_start[user_id] = current_time
-                        logger.info(f"🎙️ Prompt started for user {user_id}")
+                logger.debug(f"Speech segment started for user {user_id}")
             
             # Add to buffer and update activity time
             self.user_buffers[user_id].append(audio_bytes)
@@ -400,7 +364,7 @@ class StreamingAudioSink(discord.sinks.Sink):
                 )
             
             # Prevent buffer from growing too large
-            if buffer_duration > self.config['max_buffer_size']:
+            elif buffer_duration > self.config['max_buffer_size']:
                 # Remove oldest chunks
                 while buffer and buffer_duration > self.config['max_buffer_size']:
                     buffer.popleft()
@@ -415,8 +379,8 @@ class StreamingAudioSink(discord.sinks.Sink):
         if user_id in self.user_timeout_tasks:
             self.user_timeout_tasks[user_id].cancel()
         
-        # Start new timeout task
-        timeout_duration = self.config.get('silence_timeout', 0.5)
+        # Start new timeout task using segment_timeout for better separation
+        timeout_duration = self.config.get('segment_timeout', 2.0)
         
         # Schedule the timeout handler in the bot's event loop
         future = asyncio.run_coroutine_threadsafe(
@@ -460,6 +424,7 @@ class StreamingAudioSink(discord.sinks.Sink):
         current_time = time.time()
         
         status = {
+            'mode': 'trust_discord_vad',
             'active_users': len(self.user_buffers),
             'config': self.config,
             'users': {}
@@ -472,9 +437,9 @@ class StreamingAudioSink(discord.sinks.Sink):
             
             status['users'][user_id] = {
                 'buffer_duration': round(buffer_duration, 2),
-                'last_activity_ago': round(current_time - last_activity, 2),
+                'last_packet_ago': round(current_time - last_activity, 2),
                 'chunks_in_buffer': len(buffer),
-                'is_speaking': user_id in self.user_speech_start,
+                'speech_segment_active': user_id in self.user_speech_start,
                 'processing': self.processing_locks.get(user_id, False)
             }
         
@@ -489,14 +454,14 @@ class StreamingAudioSink(discord.sinks.Sink):
             # Wait for the timeout duration
             await asyncio.sleep(timeout_duration)
             
-            logger.info(f"⏰ Speech timeout ({timeout_duration:.1f}s) reached for user {user_id}")
+            logger.info(f"⏰ Discord speech segment timeout ({timeout_duration:.1f}s) reached for user {user_id}")
             
             # Check if user still has audio to process
             if (user_id in self.user_buffers and 
                 len(self.user_buffers[user_id]) > 0):
                 
                 # Process the accumulated buffer
-                logger.info(f"Processing accumulated buffer after timeout for user {user_id}")
+                logger.info(f"Processing speech segment after Discord silence gap for user {user_id}")
                 await self.process_user_buffer(user_id)
             
             # Clean up the timeout task reference
