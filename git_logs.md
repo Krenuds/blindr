@@ -1,11 +1,47 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 05:48:53
+Generated on: 2025-07-26 05:58:26
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 7e6b3649
+### 1. Commit: 7065cc4e
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 05:57:16 -0400
+- **Subject:** fix: Resolve Whisper hallucination issues causing duplicate text
+
+**Full Commit Message:**
+```
+fix: Resolve Whisper hallucination issues causing duplicate text
+
+## Changes Made
+✅ Fixed duplicate prompt posting when hitting 30s hard cap
+✅ Added silence trimming to reduce Whisper hallucinations
+✅ Removed repetitive initial prompts that appeared in transcriptions
+✅ Improved prompt state management with finalizing flag
+
+## Technical Details
+- Added `user_prompt_finalizing` flag to prevent race conditions
+- Implemented audio silence trimming (2% energy threshold)
+- Simplified initial_prompt to avoid repetitive text in output
+- Fixed variable reference error (audio_data -> audio_segment)
+
+## Results
+- No more duplicate Discord messages when prompts hit 30s limit
+- Significantly reduced repetitive text patterns in transcriptions
+- Cleaner, more natural transcription output
+
+Tested with continuous voice input and verified improvements.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 7e6b3649
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 23:05:39 -0400
@@ -44,7 +80,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 5310afc6
+### 3. Commit: 5310afc6
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 22:46:17 -0400
@@ -57,7 +93,7 @@ Update CLAUDE.md with PROJECT SETUP section and add numpy to requirements.txt
 
 ---
 
-### 3. Commit: 16ffa769
+### 4. Commit: 16ffa769
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 22:44:32 -0400
@@ -70,7 +106,7 @@ Update ROADMAP.md with Phase 2 performance optimization milestone
 
 ---
 
-### 4. Commit: d259be80
+### 5. Commit: d259be80
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 22:43:08 -0400
@@ -109,59 +145,6 @@ After: "The point is not the facts, it's the procedure the scientific method"
 
 The overlap buffer strategy successfully eliminates speech cutoffs
 while maintaining low latency and high accuracy\!
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 004299ca
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 22:20:01 -0400
-- **Subject:** Fix: Discord voice transcription pipeline now working\! 🎉
-
-**Full Commit Message:**
-```
-Fix: Discord voice transcription pipeline now working\! 🎉
-
-## Fixed Critical Threading Issue
-✅ Implemented asyncio.run_coroutine_threadsafe for cross-thread communication
-✅ Bot event loop now properly passed to StreamingAudioSink
-✅ Audio processing runs in bot's event loop instead of Discord's thread
-
-## Audio Format Fixes
-✅ Added PCM to WAV conversion with proper headers
-✅ Implemented 48kHz to 16kHz resampling for Whisper compatibility
-✅ Mono audio properly formatted for transcription
-
-## Simplified Architecture
-✅ Removed complex async buffer management tasks
-✅ Immediate processing when buffers fill or silence detected
-✅ Proper locks prevent concurrent processing issues
-
-## Enhanced Logging
-✅ Added debug logging throughout the pipeline
-✅ Speech detection logs with energy levels
-✅ Whisper API request/response logging
-✅ Clear success indicators (✅) in logs
-
-## Test Results
-🎤 Successfully transcribing continuous speech in real-time
-📝 3-second buffered segments with silence detection
-🚀 Low latency from speech to Discord text output
-👥 Multi-user support with independent buffers
-
-The system now successfully:
-1. Receives audio from Discord users
-2. Buffers with energy-based VAD
-3. Processes through proper threading model
-4. Converts and resamples audio correctly
-5. Sends to Whisper and posts transcriptions
-
-Phase 2 is now TRULY complete and working\!
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
