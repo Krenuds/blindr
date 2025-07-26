@@ -102,15 +102,14 @@ class DiscordAudioSink(discord.sinks.Sink):
         
         Args:
             data: Audio data from Discord
-            user: Discord user object
+            user: Discord user object or user ID
         """
         try:
-            user_id = user.id
+            user_id = user.id if hasattr(user, "id") else user
             
-            # Initialize user if needed
-            if not self.buffer_manager.is_user_initialized(user_id):
-                self.buffer_manager.initialize_user(user_id)
-                logger.debug(f"Initialized new user: {user_id}")
+            # Initialize user if needed (BufferManager handles duplicate initialization)
+            current_time = asyncio.get_event_loop().time()
+            self.buffer_manager.initialize_user(user_id, current_time)
 
             # Process audio through buffer manager
             self._process_discord_audio(user_id, data)
@@ -121,40 +120,37 @@ class DiscordAudioSink(discord.sinks.Sink):
     def _process_discord_audio(self, user_id: int, audio_data):
         """Process incoming Discord audio data."""
         try:
+            current_time = asyncio.get_event_loop().time()
+            
             # Convert Discord audio format
             processed_audio = self.audio_processor.format_audio(audio_data)
             mono_audio = self.audio_processor.stereo_to_mono(processed_audio)
             
             # Add to buffer
-            should_process = self.buffer_manager.add_audio_chunk(user_id, mono_audio)
+            self.buffer_manager.add_audio_chunk(user_id, mono_audio, current_time)
             
-            # Handle timeout scheduling
+            # Handle timeout scheduling based on Discord VAD
             if self.config.get("trust_discord_vad", True):
-                self._handle_discord_vad_timeout(user_id, should_process)
+                self._handle_discord_vad_timeout(user_id)
                 
         except Exception as e:
             logger.error(f"Error processing Discord audio for user {user_id}: {e}")
 
-    def _handle_discord_vad_timeout(self, user_id: int, should_process: bool):
+    def _handle_discord_vad_timeout(self, user_id: int):
         """Handle Discord VAD-based timeout logic."""
-        if should_process:
-            # Schedule timeout for end of speech detection
-            self.timeout_manager.schedule_timeout(
-                user_id,
-                self.config["segment_timeout"],
-                self._process_user_timeout
-            )
-        else:
-            # Cancel timeout if speech continues
-            self.timeout_manager.cancel_timeout(user_id)
+        # Schedule timeout for end of speech detection - Discord will handle VAD
+        timeout_duration = self.config.get("segment_timeout", 2.0)
+        # Schedule timeout handler - this creates the coroutine
+        self.timeout_manager.schedule_timeout(
+            user_id,
+            timeout_duration,
+            self._timeout_handler(user_id, timeout_duration)
+        )
 
     async def _process_user_timeout(self, user_id: int):
         """Process user timeout and send audio for transcription."""
         try:
-            audio_buffer = self.buffer_manager.get_user_buffer(user_id)
-            if not audio_buffer:
-                return
-
+            # Check buffer duration before processing
             buffer_duration = self.buffer_manager.get_buffer_duration(user_id)
             
             # Check if buffer meets minimum requirements
@@ -163,8 +159,10 @@ class DiscordAudioSink(discord.sinks.Sink):
                 self.buffer_manager.clear_user_buffer(user_id)
                 return
 
-            # Get and clear buffer
-            audio_segment = self.buffer_manager.extract_user_buffer(user_id)
+            # Get and clear buffer (clear_user_buffer returns the audio data)
+            audio_segment = self.buffer_manager.clear_user_buffer(user_id)
+            if not audio_segment:
+                return
             
             # Process asynchronously
             await self.process_audio_segment(user_id, audio_segment)
@@ -189,3 +187,33 @@ class DiscordAudioSink(discord.sinks.Sink):
             "active_users": len(self.buffer_manager.user_buffers),
             "timeout_tasks": len(self.timeout_manager.user_timeout_tasks),
         }
+
+    async def _timeout_handler(self, user_id: int, timeout_duration: float):
+        """
+        Handle speech timeout for a user.
+        Single-execution model to prevent conflicts.
+        """
+        try:
+            # Sleep for the timeout duration
+            await asyncio.sleep(timeout_duration)
+            
+            # Check if we should still process (no new speech detected)
+            current_time = asyncio.get_event_loop().time()
+            last_packet_time = self.buffer_manager.user_last_packet_time.get(user_id, 0)
+            time_since_last_packet = current_time - last_packet_time
+            
+            if time_since_last_packet >= timeout_duration:
+                logger.info(
+                    f"⏰ Speech segment timeout ({timeout_duration:.1f}s) - processing buffer for user {user_id}"
+                )
+                if self.buffer_manager.get_buffer_duration(user_id) > 0:
+                    await self._process_user_timeout(user_id)
+            else:
+                logger.debug(
+                    f"Timeout cancelled - new speech detected for user {user_id}"
+                )
+        except Exception as e:
+            logger.error(f"Error in timeout handler for user {user_id}: {e}")
+        finally:
+            # Clean up the timeout task
+            self.timeout_manager.cleanup_timeout(user_id)

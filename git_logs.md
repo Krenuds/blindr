@@ -1,11 +1,60 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 13:56:06
+Generated on: 2025-07-26 14:04:04
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: c7c9f346
+### 1. Commit: 2028b8fa
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 14:03:12 -0400
+- **Subject:** refactor: reorganize into audio-centric domain architecture - UNTESTED
+
+**Full Commit Message:**
+```
+refactor: reorganize into audio-centric domain architecture - UNTESTED
+
+## Domain Reorganization Complete
+Successfully inverted the architecture to make audio processing the core domain
+instead of Discord being central. This creates a cleaner, more extensible structure.
+
+## New Architecture:
+- **Audio Domain**: Core audio processing (AudioProcessor, BufferManager, TimeoutManager)
+- **Discord Interface**: Lightweight wrapper around audio core (DiscordAudioSink)
+- **Bot Package**: Pure Discord I/O, commands, and channel management
+
+## Changes Made:
+1. **Created `src/audio/` package** - Core audio processing domain
+   - `streaming_sink.py` - Pure audio processing components
+   - `discord_interface.py` - Discord-specific audio capture
+
+2. **Simplified `src/bot/voice_bot.py`** - Now uses audio domain
+   - Removed audio processing logic
+   - Clean import from audio domain
+   - Focus on Discord ceremony only
+
+3. **Removed `src/bot/audio_processing.py`** - Moved to audio domain
+
+## Benefits:
+- **Reusable Core**: Audio processing independent of Discord
+- **Clean Separation**: Discord is just one interface to audio core
+- **Extensible**: Easy to add web interface, mobile app, API endpoints
+- **Maintainable**: Clear domain boundaries
+
+## Ready For:
+- LLM integration can now coordinate audio → Whisper → classification → model routing
+- Additional interfaces (web, mobile) can reuse the same audio core
+- Microservices architecture when needed
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: c7c9f346
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:37:17 -0400
@@ -18,7 +67,7 @@ docs: enhance architecture with 3-way classification and rename tts to piper - U
 
 ---
 
-### 2. Commit: dd0fc05d
+### 3. Commit: dd0fc05d
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:32:29 -0400
@@ -61,7 +110,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 327e62ff
+### 4. Commit: 327e62ff
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:12:51 -0400
@@ -103,7 +152,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: edae4eb8
+### 5. Commit: edae4eb8
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 12:21:32 -0400
@@ -169,66 +218,6 @@ python run_bot.py
 ```
 
 This reorganization was done comprehensively but needs debugging before use.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: c422b35e
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 11:56:10 -0400
-- **Subject:** refactor: Extract domain classes from StreamingAudioSink for improved separation of concerns
-
-**Full Commit Message:**
-```
-refactor: Extract domain classes from StreamingAudioSink for improved separation of concerns
-
-## Domain-Driven Refactoring Achievement
-Successfully applied "One Responsibility Per Class" pattern to StreamingAudioSink,
-breaking the 292-line class into focused domain components.
-
-## Extracted Classes:
-
-### 1. AudioProcessor (Static Methods)
-- **Responsibility**: Audio format conversions only
-- **Methods**: stereo_to_mono(), format_audio(), pcm_to_wav()
-- **Benefits**: Testable, reusable, focused on audio processing
-
-### 2. BufferManager
-- **Responsibility**: User buffer state and speech tracking
-- **Methods**: initialize_user(), add_audio_chunk(), clear_user_buffer(), etc.
-- **Benefits**: Encapsulates all user state management logic
-
-### 3. TimeoutManager
-- **Responsibility**: Speech timeout scheduling and lifecycle
-- **Methods**: schedule_timeout(), cancel_timeout(), cleanup_all_timeouts()
-- **Benefits**: Centralized timeout management, clear task lifecycle
-
-### 4. StreamingAudioSink (Coordinator)
-- **Responsibility**: Discord integration and component orchestration
-- **Focus**: Reduced from 292 lines to ~180 lines of core coordination logic
-- **Benefits**: Clear single purpose, easier to understand and maintain
-
-## Code Quality Improvements:
-- **Clear Boundaries**: Each class has obvious, single domain responsibility
-- **Better Testability**: Components can be unit tested independently
-- **Maintainable**: Changes in one domain don't affect others
-- **Foundation Ready**: Clean structure prepared for Phase 3 LLM integration
-
-## Preserved Functionality:
-- ✅ Zero breaking changes to voice-to-text pipeline
-- ✅ All existing Discord integration patterns maintained
-- ✅ Complete timeout and buffer management functionality preserved
-- ✅ Same high-quality audio processing and Whisper integration
-
-## Learning Outcome:
-Applied domain-driven design principles successfully, demonstrating how
-"One Responsibility Per Class" creates cleaner, more maintainable code
-while preserving all working functionality.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
