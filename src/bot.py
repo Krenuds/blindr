@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
+intents.members = True  # Required to access member-specific information like nicknames
 bot = commands.Bot(command_prefix=os.getenv('BOT_PREFIX', '!'), intents=intents)
 
 # Streaming state management
@@ -108,15 +109,22 @@ async def start_streaming(guild_id: int, channel):
                     # Try multiple fallback methods to get username
                     if member:
                         username = member.display_name
+                        logger.info(f"✅ Username resolved via guild.get_member(): {username}")
                     else:
                         # Try to fetch member if not in cache
                         try:
                             member = await guild.fetch_member(user_id)
                             username = member.display_name
+                            logger.info(f"✅ Username resolved via guild.fetch_member(): {username}")
                         except:
                             # Final fallback - try to get user from bot cache
                             user = bot.get_user(user_id)
-                            username = user.display_name if user else f"User {user_id}"
+                            if user:
+                                username = user.display_name
+                                logger.info(f"✅ Username resolved via bot.get_user(): {username}")
+                            else:
+                                username = f"User {user_id}"
+                                logger.info(f"❌ Username fallback to User ID: {username}")
                     
                     await text_channel.send(f"🎤 {username} ({duration:.1f}s): {text}")
                     logger.info(f"Sent transcription to Discord: {text} (from {username})")

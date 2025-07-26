@@ -1,11 +1,35 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 06:27:26
+Generated on: 2025-07-26 06:38:46
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 0c5a71c9
+### 1. Commit: 82c8ee89
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 06:28:08 -0400
+- **Subject:** fix: Improve username lookup for transcriptions
+
+**Full Commit Message:**
+```
+fix: Improve username lookup for transcriptions
+
+- Add multiple fallback methods for getting usernames
+- Try guild.get_member(), then guild.fetch_member(), then bot.get_user()
+- Use text_channel.guild instead of channel.guild for more reliable access
+- Add better logging to show which username was resolved
+
+This should fix the 'User 1080530572365004830' display issue.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 0c5a71c9
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:24:48 -0400
@@ -29,7 +53,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: e235c345
+### 3. Commit: e235c345
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:16:19 -0400
@@ -53,7 +77,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: fbfb033d
+### 4. Commit: fbfb033d
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:11:05 -0400
@@ -74,7 +98,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: e4c33840
+### 5. Commit: e4c33840
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:00:16 -0400
@@ -83,42 +107,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Full Commit Message:**
 ```
 Update git logs
-```
-
----
-
-### 5. Commit: 7065cc4e
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 05:57:16 -0400
-- **Subject:** fix: Resolve Whisper hallucination issues causing duplicate text
-
-**Full Commit Message:**
-```
-fix: Resolve Whisper hallucination issues causing duplicate text
-
-## Changes Made
-✅ Fixed duplicate prompt posting when hitting 30s hard cap
-✅ Added silence trimming to reduce Whisper hallucinations
-✅ Removed repetitive initial prompts that appeared in transcriptions
-✅ Improved prompt state management with finalizing flag
-
-## Technical Details
-- Added `user_prompt_finalizing` flag to prevent race conditions
-- Implemented audio silence trimming (2% energy threshold)
-- Simplified initial_prompt to avoid repetitive text in output
-- Fixed variable reference error (audio_data -> audio_segment)
-
-## Results
-- No more duplicate Discord messages when prompts hit 30s limit
-- Significantly reduced repetitive text patterns in transcriptions
-- Cleaner, more natural transcription output
-
-Tested with continuous voice input and verified improvements.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ---
