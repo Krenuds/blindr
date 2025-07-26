@@ -321,7 +321,7 @@ class StreamingAudioSink(discord.sinks.Sink):
         # This ensures each new speech gets its own timeout handler
         if user_id in self.user_timeout_tasks:
             self.user_timeout_tasks[user_id].cancel()
-            del self.user_timeout_tasks[user_id]
+            self.user_timeout_tasks.pop(user_id, None)
         
         # Always create fresh timeout task for current speech segment
         timeout_duration = self.config.get('segment_timeout', 2.0)
