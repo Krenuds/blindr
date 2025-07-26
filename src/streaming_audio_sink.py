@@ -44,8 +44,9 @@ class StreamingAudioSink(discord.sinks.Sink):
             'silence_timeout': 1.0,          # Seconds after last packet before processing
             'segment_timeout': 2.0,          # Longer timeout to complete segments
             'max_buffer_size': 10.0,         # Maximum buffer size in seconds
+            'force_process_threshold': 8.0,  # Force processing at this threshold to prevent accumulation
             'min_speech_duration': 0.3,      # Minimum speech duration to process
-            'overlap_duration': 0.5,         # Seconds of audio to keep for overlap between buffers
+            # overlap_duration removed - using clean segment isolation
         }
         
         if config:
@@ -58,8 +59,7 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.user_last_packet_time: Dict[int, float] = {}  # Track last packet time for timeout detection
         self.user_timeout_tasks: Dict[int, asyncio.Task] = {}  # Background tasks for timeout detection
         self.processing_locks: Dict[int, bool] = {}
-        self.user_overlap_buffers: Dict[int, bytes] = {}  # Store overlap audio for continuity
-        self.user_last_transcription: Dict[int, str] = {}  # Store last transcription for merging
+        # Removed overlap buffers and transcription merging for clean segment isolation
         
         logger.info(f"StreamingAudioSink initialized with config: {self.config}")
     
@@ -193,14 +193,9 @@ class StreamingAudioSink(discord.sinks.Sink):
             if result and result.get('text'):
                 transcribed_text = result['text'].strip()
                 if transcribed_text:
-                    # Simple continuous mode - merge with previous transcription to handle overlap
-                    final_text = await self.merge_transcriptions(user_id, transcribed_text)
-                    # Send transcription to Discord channel
-                    await self.send_transcription(user_id, final_text, duration)
-                    logger.info(f"✅ Transcribed for user {user_id}: {final_text}")
-                    
-                    # Store for next merge
-                    self.user_last_transcription[user_id] = transcribed_text
+                    # Clean segment isolation - no merging with previous transcriptions
+                    await self.send_transcription(user_id, transcribed_text, duration)
+                    logger.info(f"✅ Transcribed for user {user_id}: {transcribed_text}")
                 else:
                     logger.debug(f"Empty transcription result for user {user_id}")
             else:
@@ -209,41 +204,7 @@ class StreamingAudioSink(discord.sinks.Sink):
         except Exception as e:
             logger.error(f"Audio processing error for user {user_id}: {e}")
     
-    async def merge_transcriptions(self, user_id: int, new_text: str) -> str:
-        """
-        Merge new transcription with previous to handle overlap.
-        Removes duplicate words at the boundary.
-        """
-        if user_id not in self.user_last_transcription:
-            return new_text
-        
-        last_text = self.user_last_transcription[user_id]
-        if not last_text:
-            return new_text
-        
-        # Split into words
-        last_words = last_text.split()
-        new_words = new_text.split()
-        
-        if not last_words or not new_words:
-            return new_text
-        
-        # Find overlap by checking if end of last matches beginning of new
-        overlap_found = False
-        for i in range(min(len(last_words), len(new_words))):
-            # Check if last i words of previous match first i words of new
-            if i > 0 and last_words[-i:] == new_words[:i]:
-                # Remove the overlapping words from the beginning of new text
-                merged_words = new_words[i:]
-                overlap_found = True
-                logger.debug(f"Found {i} word overlap for user {user_id}")
-                break
-        
-        if overlap_found and merged_words:
-            return ' '.join(merged_words)
-        else:
-            # No overlap found, return as is
-            return new_text
+    # Removed merge_transcriptions method - using clean segment isolation
     
     async def send_transcription(self, user_id: int, text: str, duration: float):
         """
@@ -273,16 +234,7 @@ class StreamingAudioSink(discord.sinks.Sink):
             # Combine buffer chunks into single audio segment
             audio_segment = b''.join(buffer)
             
-            # Calculate overlap samples to keep
-            overlap_samples = int(self.config['overlap_duration'] * self.config['sample_rate'] * 2)  # 2 bytes per sample
-            
-            # Store overlap for next buffer (last part of current buffer)
-            if len(audio_segment) > overlap_samples:
-                self.user_overlap_buffers[user_id] = audio_segment[-overlap_samples:]
-            
-            # Prepend previous overlap if exists
-            if user_id in self.user_overlap_buffers:
-                audio_segment = self.user_overlap_buffers[user_id] + audio_segment
+            # Clean segment isolation - no overlap between buffers
             
             buffer.clear()
             
@@ -346,48 +298,33 @@ class StreamingAudioSink(discord.sinks.Sink):
             total_samples = sum(len(chunk) for chunk in buffer) // 2
             buffer_duration = total_samples / self.config['sample_rate']
             
-            # Process if buffer is full
-            if buffer_duration >= self.config['buffer_duration']:
+            # Force processing at threshold to prevent massive buffer accumulation
+            force_threshold = self.config.get('force_process_threshold', 8.0)
+            if buffer_duration >= force_threshold and not self.processing_locks.get(user_id, False):
+                logger.warning(f"⚠️ Force processing buffer for user {user_id} ({buffer_duration:.2f}s) to prevent accumulation")
+                asyncio.run_coroutine_threadsafe(
+                    self.process_user_buffer(user_id),
+                    self.bot_event_loop
+                )
+            # Process if buffer reaches normal duration  
+            elif buffer_duration >= self.config['buffer_duration'] and not self.processing_locks.get(user_id, False):
                 logger.debug(f"Buffer full for user {user_id} ({buffer_duration:.2f}s), processing...")
-                # Use run_coroutine_threadsafe to process in the bot's event loop
                 asyncio.run_coroutine_threadsafe(
                     self.process_user_buffer(user_id),
                     self.bot_event_loop
                 )
-            
-            # Check for maximum buffer duration
-            if buffer_duration >= self.config.get('max_buffer_size', 10.0):
-                logger.debug(f"Max buffer size reached for user {user_id}, processing...")
-                asyncio.run_coroutine_threadsafe(
-                    self.process_user_buffer(user_id),
-                    self.bot_event_loop
-                )
-            
-            # Prevent buffer from growing too large
-            elif buffer_duration > self.config['max_buffer_size']:
-                # Remove oldest chunks
-                while buffer and buffer_duration > self.config['max_buffer_size']:
-                    buffer.popleft()
-                    total_samples = sum(len(chunk) for chunk in buffer) // 2
-                    buffer_duration = total_samples / self.config['sample_rate']
-                logger.debug(f"Trimmed buffer for user {user_id} to {buffer_duration:.2f}s")
         
-        # Update last packet time and start/restart timeout task
+        # Update last packet time
         self.user_last_packet_time[user_id] = current_time
         
-        # Cancel existing timeout task if any
-        if user_id in self.user_timeout_tasks:
-            self.user_timeout_tasks[user_id].cancel()
-        
-        # Start new timeout task using segment_timeout for better separation
-        timeout_duration = self.config.get('segment_timeout', 2.0)
-        
-        # Schedule the timeout handler in the bot's event loop
-        future = asyncio.run_coroutine_threadsafe(
-            self.timeout_handler(user_id, timeout_duration),
-            self.bot_event_loop
-        )
-        self.user_timeout_tasks[user_id] = future
+        # Simple timeout approach - only start if no timeout task exists
+        if user_id not in self.user_timeout_tasks:
+            timeout_duration = self.config.get('segment_timeout', 2.0)
+            future = asyncio.run_coroutine_threadsafe(
+                self.timeout_handler(user_id, timeout_duration),
+                self.bot_event_loop
+            )
+            self.user_timeout_tasks[user_id] = future
     
     
     def cleanup(self):
@@ -409,8 +346,6 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.user_last_activity.clear()
         self.user_speech_start.clear()
         self.processing_locks.clear()
-        self.user_overlap_buffers.clear()
-        self.user_last_transcription.clear()
         
         logger.info("StreamingAudioSink cleanup complete")
     
@@ -448,29 +383,31 @@ class StreamingAudioSink(discord.sinks.Sink):
     async def timeout_handler(self, user_id: int, timeout_duration: float):
         """
         Handle speech timeout for a user.
-        Called after silence timeout to process accumulated audio.
+        Single-execution model to prevent conflicts.
         """
         try:
-            # Wait for the timeout duration
+            start_time = self.user_last_packet_time.get(user_id, 0)
+            
+            # Wait for timeout, but check for new packets during wait
             await asyncio.sleep(timeout_duration)
             
-            logger.info(f"⏰ Discord speech segment timeout ({timeout_duration:.1f}s) reached for user {user_id}")
+            # Process if enough time has passed since last packet
+            current_time = time.time()
+            time_since_last_packet = current_time - self.user_last_packet_time.get(user_id, 0)
             
-            # Check if user still has audio to process
-            if (user_id in self.user_buffers and 
-                len(self.user_buffers[user_id]) > 0):
+            if time_since_last_packet >= timeout_duration:
+                logger.info(f"⏰ Speech segment timeout ({timeout_duration:.1f}s) - processing buffer for user {user_id}")
                 
-                # Process the accumulated buffer
-                logger.info(f"Processing speech segment after Discord silence gap for user {user_id}")
-                await self.process_user_buffer(user_id)
-            
-            # Clean up the timeout task reference
-            if user_id in self.user_timeout_tasks:
-                del self.user_timeout_tasks[user_id]
-                
-        except asyncio.CancelledError:
-            # Task was cancelled (new speech detected), this is normal
-            logger.debug(f"Timeout task cancelled for user {user_id} (new speech detected)")
+                if (user_id in self.user_buffers and 
+                    len(self.user_buffers[user_id]) > 0):
+                    await self.process_user_buffer(user_id)
+            else:
+                logger.debug(f"Timeout cancelled - new speech detected for user {user_id}")
+                    
         except Exception as e:
             logger.error(f"Error in timeout handler for user {user_id}: {e}")
+        finally:
+            # Always clean up timeout task reference
+            if user_id in self.user_timeout_tasks:
+                del self.user_timeout_tasks[user_id]
     
