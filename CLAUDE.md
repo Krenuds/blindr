@@ -14,6 +14,42 @@ The user is that you tutor them as they learn about AI models and MCP. Please ta
 - Git commit with comment after successfully completing tasks.  
 - All models are running locally. Either via docker or as system services.
 
+## PROJECT SETUP
+
+**Current Stack Status:**
+- ✅ **Discord Bot**: Python 3.12+ with py-cord 2.6.1
+  - Continuous audio streaming with overlap buffer (5s segments, 0.5s overlap)
+  - Energy-based VAD with 50 threshold
+  - Real-time transcription to Discord channels
+  
+- ✅ **Whisper STT**: Native service on port 9000
+  - Using 'small' model with CUDA acceleration (RTX 2080)
+  - Handles 16kHz mono WAV audio
+  - ~300ms response time for 5s segments
+  
+- ⏳ **Ollama**: Not yet installed (Phase 3)
+  - Will host Llama 3.2 (3B) for conversational responses
+  - Will host Qwen 2.5-Coder (7B) for agentic tasks
+  
+- ⏳ **Piper TTS**: Not yet deployed (Phase 4)
+  - Will run in Docker on port 10200
+  
+- ⏳ **FastAPI Gateway**: Not yet implemented (Phase 5)
+  - Will centralize all service communication on port 8000
+  
+- ⏳ **LiteLLM Router**: Not yet deployed (Phase 6)
+  - Will handle intelligent model routing on port 4000
+  
+- ⏳ **DistilBERT Classifier**: Not yet implemented (Phase 6)
+  - Will classify intents on port 8001
+
+**Dependencies** (requirements.txt):
+- py-cord==2.6.1
+- python-dotenv==1.1.1
+- aiohttp==3.12.14
+- numpy==1.26.4 (for audio processing)
+- asyncio (built-in)
+
 **PROJECT OVERVIEW** 
 ```
 graph TB
