@@ -1,11 +1,63 @@
 # Git Log - blindr
 
-Generated on: 2025-07-25 21:20:45
+Generated on: 2025-07-25 21:28:01
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 17d9e02e
+### 1. Commit: 577644ba
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 21:26:57 -0400
+- **Subject:** Implement: Continuous audio streaming with real-time transcription
+
+**Full Commit Message:**
+```
+Implement: Continuous audio streaming with real-time transcription
+
+🎤 STREAMING AUDIO ARCHITECTURE
+
+## Major Implementation:
+✅ Replace manual recording with continuous streaming based on VAD_STREAMING_DESIGN.md
+✅ Add StreamingAudioSink with energy-based VAD (brodan approach)
+✅ Implement 3-second buffered segments for real-time Whisper transcription
+✅ Auto-join voice channels and start streaming immediately
+
+## Core Features:
+✅ Energy threshold-based Voice Activity Detection (threshold: 50)
+✅ Buffered audio processing (3-second segments to Whisper)
+✅ Real-time transcription results sent to Discord channels
+✅ Automatic silence filtering and buffer management
+✅ Comprehensive error handling and logging
+
+## Bot Updates:
+✅ Remove manual \!start_recording and \!stop_recording commands
+✅ Add \!stream_info command for detailed streaming status
+✅ Auto-start streaming on voice channel connection
+✅ Real-time transcription feedback during conversations
+
+## Technical Improvements:
+- StreamingAudioSink: Continuous audio processing with VAD
+- WhisperClient integration with buffered streaming
+- Async audio processing with proper cleanup
+- Status monitoring and user activity tracking
+
+## Testing:
+✅ Integration tests pass for WhisperClient and StreamingAudioSink
+✅ Whisper service confirmed healthy with CUDA and 'small' model
+✅ All syntax checks and imports verified
+
+This completes the transition from manual recording to continuous streaming,
+significantly advancing Phase 2 with production-ready real-time voice-to-text.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 17d9e02e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 21:18:38 -0400
@@ -51,7 +103,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 83f0e994
+### 3. Commit: 83f0e994
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 21:14:56 -0400
@@ -95,7 +147,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 50f247c0
+### 4. Commit: 50f247c0
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 20:08:13 -0400
@@ -121,7 +173,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: 741ac46a
+### 5. Commit: 741ac46a
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 20:06:48 -0400
@@ -145,50 +197,6 @@ Security: Remove Discord bot token and improve env file handling
 - Updated .gitignore to include .env files
 
 This resolves GitHub push protection issues and prevents future secret leaks.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 3cd2b1cc
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 20:04:37 -0400
-- **Subject:** Clean up repository and update documentation
-
-**Full Commit Message:**
-```
-Clean up repository and update documentation
-
-🧹 REPOSITORY CLEANUP & DOCUMENTATION UPDATE
-
-## Repository Cleanup:
-✅ Remove entire venv/ directory from git tracking (thousands of files)
-✅ Remove all __pycache__ directories and .pyc files
-✅ Remove log files (logs/bot.log)
-✅ Add comprehensive .gitignore with Python, IDE, OS, and project-specific rules
-✅ Add .gitkeep to preserve recorded_audio directory structure
-
-## Documentation Updates:
-✅ Update CLAUDE.md architecture diagram:
-  - Changed Whisper from 'Docker Container' to 'Native Service'
-  - Updated Discord Bot from 'discord.py' to 'py-cord with AudioSink'
-  - Updated testing instruction from 'docker logs' to 'service logs'
-
-✅ Update ROADMAP.md Phase 2 status:
-  - Mark Whisper deployment as complete (native service with GPU)
-  - Mark REST API endpoint as complete (port 9000)
-  - Mark basic testing as complete
-  - Note current tiny model usage for optimization
-
-## Impact:
-- Repository size dramatically reduced (removed ~2000+ tracked files)
-- Documentation now accurately reflects current mixed native/Docker architecture
-- Proper gitignore prevents future accidental commits of temporary files
-- Clean foundation for continued development
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
