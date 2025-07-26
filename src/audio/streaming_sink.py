@@ -78,27 +78,6 @@ class AudioProcessor:
             audio_array = audio_array[::resample_factor]
             sample_rate = 16000
 
-        if len(audio_array) > 320:
-            window_size = 160
-            energy_threshold = np.max(np.abs(audio_array)) * 0.02
-
-            start_idx = 0
-            for i in range(0, len(audio_array) - window_size, window_size):
-                window_energy = np.mean(np.abs(audio_array[i : i + window_size]))
-                if window_energy > energy_threshold:
-                    start_idx = max(0, i - window_size)
-                    break
-
-            end_idx = len(audio_array)
-            for i in range(len(audio_array) - window_size, window_size, -window_size):
-                window_energy = np.mean(np.abs(audio_array[i : i + window_size]))
-                if window_energy > energy_threshold:
-                    end_idx = min(len(audio_array), i + 2 * window_size)
-                    break
-
-            if start_idx < end_idx - window_size:
-                audio_array = audio_array[start_idx:end_idx]
-
         wav_buffer = io.BytesIO()
         with wave.open(wav_buffer, "wb") as wav_file:
             wav_file.setnchannels(1)
@@ -123,6 +102,12 @@ class BufferManager:
         self.user_speech_start: Dict[int, float] = {}
         self.user_last_packet_time: Dict[int, float] = {}
         self.processing_locks: Dict[int, bool] = {}
+        
+        # Prompt mode state
+        self.user_prompt_active: Dict[int, bool] = {}  # Track if user is in prompt mode
+        self.user_prompt_start: Dict[int, float] = {}  # Track prompt start time
+        self.user_prompt_transcriptions: Dict[int, list] = {}  # Accumulate prompt transcriptions
+        self.user_last_speech_time: Dict[int, float] = {}  # Track last speech time for prompt finalization
 
     def initialize_user(self, user_id: int, current_time: float):
         """Initialize buffer and tracking data for a new user."""
@@ -219,8 +204,36 @@ class BufferManager:
         self.user_last_activity.clear()
         self.user_speech_start.clear()
         self.processing_locks.clear()
+        self.user_prompt_active.clear()
+        self.user_prompt_start.clear()
+        self.user_prompt_transcriptions.clear()
 
         return remaining_users
+    
+    def start_prompt(self, user_id: int, current_time: float):
+        """Start prompt mode for a user."""
+        self.user_prompt_active[user_id] = True
+        self.user_prompt_start[user_id] = current_time
+        self.user_prompt_transcriptions[user_id] = []
+        logger.info(f"🎙️ Prompt started for user {user_id}")
+    
+    def add_prompt_transcription(self, user_id: int, text: str):
+        """Add a transcription to the prompt accumulator."""
+        if user_id not in self.user_prompt_transcriptions:
+            self.user_prompt_transcriptions[user_id] = []
+        self.user_prompt_transcriptions[user_id].append(text)
+        logger.info(f"📝 Accumulated prompt segment for user {user_id}: {text}")
+    
+    def get_prompt_transcriptions(self, user_id: int) -> list:
+        """Get all accumulated transcriptions for a user."""
+        return self.user_prompt_transcriptions.get(user_id, [])
+    
+    def clear_prompt(self, user_id: int):
+        """Clear prompt state for a user."""
+        self.user_prompt_active[user_id] = False
+        self.user_prompt_transcriptions[user_id] = []
+        if user_id in self.user_prompt_start:
+            del self.user_prompt_start[user_id]
 
 
 class TimeoutManager:

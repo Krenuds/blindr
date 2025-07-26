@@ -1,11 +1,30 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 14:36:45
+Generated on: 2025-07-26 14:55:05
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 3f2f4372
+### 1. Commit: 8ec6ce4c
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 14:40:28 -0400
+- **Subject:** fix: prevent timeout rescheduling in TimeoutManager - UNTESTED
+
+**Full Commit Message:**
+```
+fix: prevent timeout rescheduling in TimeoutManager - UNTESTED
+
+The TimeoutManager was cancelling existing timeouts when schedule_timeout
+was called, defeating the purpose of the check in _handle_discord_vad_timeout.
+
+Changed schedule_timeout to skip if a timeout is already active for the user,
+preventing the race condition that was stopping transcriptions from processing.
+```
+
+---
+
+### 2. Commit: 3f2f4372
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:21:17 -0400
@@ -53,7 +72,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 30bbe2db
+### 3. Commit: 30bbe2db
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:08:42 -0400
@@ -100,7 +119,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: 2028b8fa
+### 4. Commit: 2028b8fa
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 14:03:12 -0400
@@ -149,7 +168,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: c7c9f346
+### 5. Commit: c7c9f346
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 13:37:17 -0400
@@ -158,49 +177,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Full Commit Message:**
 ```
 docs: enhance architecture with 3-way classification and rename tts to piper - UNTESTED
-```
-
----
-
-### 5. Commit: dd0fc05d
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 13:32:29 -0400
-- **Subject:** docs: final prep for LLM integration - architecture and package planning
-
-**Full Commit Message:**
-```
-docs: final prep for LLM integration - architecture and package planning
-
-## Updated Architecture Documentation
-- Cleaned up CLAUDE.md with simplified flow diagram
-- Defined complete LLM integration stack: DistilBERT → LangChain → LiteLLM → Ollama
-- Streamlined architecture representation for better clarity
-
-## Key Components Defined:
-- **DistilBERT**: Intent classification (conversational vs agentic)
-- **LangChain**: Prompt templates and chain orchestration
-- **LiteLLM**: Unified model routing with OpenAI-compatible API
-- **Ollama**: Model hosting (Llama 3.2 3B + Qwen 2.5-Coder 7B)
-
-## Package Structure Updated:
-```
-src/llm/
-├── client.py       # LiteLLM client for model routing
-├── classifier.py   # DistilBERT intent classification
-└── chains.py       # LangChain prompt templates and chains
-```
-
-## Architecture Benefits:
-- Minimal complexity approach avoiding unnecessary microservices
-- Clean domain separation within bot process
-- Foundation ready for production LLM integration
-
-Ready to begin Phase 3: LLM package implementation with modern AI stack.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ---

@@ -47,6 +47,10 @@ class DiscordAudioSink(discord.sinks.Sink):
             "max_buffer_size": 10.0,
             "force_process_threshold": 8.0,
             "min_speech_duration": 0.3,
+            # Prompt mode configuration
+            "prompt_mode": True,                # Enable prompt mode for continuous speech
+            "prompt_silence_timeout": 2.0,      # Longer silence timeout for prompts
+            "prompt_max_duration": 30.0,        # Maximum prompt duration in seconds
         }
         if config:
             self.config.update(config)
@@ -84,9 +88,15 @@ class DiscordAudioSink(discord.sinks.Sink):
                 text = result["text"].strip()
                 duration = len(audio_segment) / (self.config["sample_rate"] * 2)
                 
-                # Send transcription through callback if available
-                if self.send_transcription:
-                    await self.send_transcription(user_id, text, duration)
+                # In prompt mode, accumulate transcriptions
+                if self.config["prompt_mode"] and self.buffer_manager.user_prompt_active.get(user_id, False):
+                    self.buffer_manager.add_prompt_transcription(user_id, text)
+                    # Update last speech time for prompt finalization
+                    self.buffer_manager.user_last_speech_time[user_id] = time.time()
+                else:
+                    # Send transcription through callback if available
+                    if self.send_transcription:
+                        await self.send_transcription(user_id, text, duration)
                     
                 processing_time = asyncio.get_event_loop().time() - start_time
                 logger.info(
@@ -125,13 +135,30 @@ class DiscordAudioSink(discord.sinks.Sink):
             current_time = time.time()
             logger.debug(f"Processing audio for user {user_id} at {current_time}")
             
-            # Convert Discord audio format
-            processed_audio = self.audio_processor.format_audio(audio_data)
-            mono_audio = self.audio_processor.stereo_to_mono(processed_audio)
+            # Convert Discord audio format (format_audio already converts to mono)
+            mono_audio = self.audio_processor.format_audio(audio_data)
             logger.debug(f"Converted audio: original={len(audio_data)} bytes, mono={len(mono_audio)} bytes")
+            
+            # In prompt mode, activate prompt tracking when speech starts
+            if (self.config["prompt_mode"] and 
+                not self.buffer_manager.user_prompt_active.get(user_id, False) and
+                user_id not in self.buffer_manager.user_speech_start):
+                self.buffer_manager.start_prompt(user_id, current_time)
             
             # Add to buffer
             self.buffer_manager.add_audio_chunk(user_id, mono_audio, current_time)
+            
+            # In prompt mode, check for hard cap
+            if self.config["prompt_mode"] and self.buffer_manager.user_prompt_active.get(user_id, False):
+                prompt_duration = current_time - self.buffer_manager.user_prompt_start.get(user_id, current_time)
+                if prompt_duration >= self.config["prompt_max_duration"]:
+                    logger.info(f"⏱️ Prompt hard cap reached for user {user_id} ({prompt_duration:.1f}s)")
+                    # Process remaining buffer and finalize prompt
+                    asyncio.create_task(self._process_user_timeout(user_id))
+                    asyncio.create_task(self.finalize_prompt(user_id))
+                    # Clear timeout to prevent double processing
+                    self.timeout_manager.cancel_timeout(user_id)
+                    return
             
             # Handle timeout scheduling based on Discord VAD
             if self.config.get("trust_discord_vad", True):
@@ -145,7 +172,9 @@ class DiscordAudioSink(discord.sinks.Sink):
         """Handle Discord VAD-based timeout logic."""
         # Only schedule timeout if one isn't already running
         if user_id not in self.timeout_manager.user_timeout_tasks:
+            # Always use segment timeout for buffer processing
             timeout_duration = self.config.get("segment_timeout", 2.0)
+            
             # Schedule timeout handler - this creates the coroutine
             self.timeout_manager.schedule_timeout(
                 user_id,
@@ -180,7 +209,7 @@ class DiscordAudioSink(discord.sinks.Sink):
         """Clean up resources."""
         try:
             self.timeout_manager.cleanup_all_timeouts()
-            self.buffer_manager.clear_all_buffers()
+            self.buffer_manager.cleanup_all_buffers()
             logger.info("DiscordAudioSink cleanup completed")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
@@ -210,27 +239,58 @@ class DiscordAudioSink(discord.sinks.Sink):
             await asyncio.sleep(timeout_duration)
             logger.debug(f"Timeout handler woke up for user {user_id}")
             
-            # Check if we should still process (no new speech detected)
+            # Process the buffer after timeout duration
+            # This ensures we process speech segments even if Discord is still sending packets
             current_time = time.time()
-            last_packet_time = self.buffer_manager.user_last_packet_time.get(user_id, 0)
-            time_since_last_packet = current_time - last_packet_time
+            buffer_duration = self.buffer_manager.get_buffer_duration(user_id)
             
-            logger.debug(f"Timeout check: current={current_time:.3f}, last_packet={last_packet_time:.3f}, "
-                        f"time_since={time_since_last_packet:.3f}s, timeout_dur={timeout_duration:.1f}s")
+            logger.info(
+                f"⏰ Speech segment timeout ({timeout_duration:.1f}s) - processing buffer for user {user_id}, "
+                f"buffer duration: {buffer_duration:.2f}s"
+            )
             
-            if time_since_last_packet >= timeout_duration:
-                logger.info(
-                    f"⏰ Speech segment timeout ({timeout_duration:.1f}s) - processing buffer for user {user_id}"
-                )
-                if self.buffer_manager.get_buffer_duration(user_id) > 0:
-                    await self._process_user_timeout(user_id)
-            else:
-                logger.debug(
-                    f"Timeout cancelled - new speech detected for user {user_id} "
-                    f"({time_since_last_packet:.3f}s < {timeout_duration:.1f}s)"
-                )
+            if buffer_duration > 0:
+                await self._process_user_timeout(user_id)
         except Exception as e:
             logger.error(f"Error in timeout handler for user {user_id}: {e}")
         finally:
             # Clean up the timeout task
             self.timeout_manager.cleanup_timeout(user_id)
+            
+            # Check if we should finalize prompt mode
+            if self.config["prompt_mode"] and self.buffer_manager.user_prompt_active.get(user_id, False):
+                current_time = time.time()
+                last_speech_time = self.buffer_manager.user_last_speech_time.get(user_id, current_time)
+                silence_duration = current_time - last_speech_time
+                
+                if silence_duration >= self.config["prompt_silence_timeout"]:
+                    logger.info(f"Finalizing prompt after {silence_duration:.1f}s silence for user {user_id}")
+                    await self.finalize_prompt(user_id)
+    
+    async def finalize_prompt(self, user_id: int):
+        """
+        Finalize a prompt by combining all accumulated transcriptions.
+        """
+        if not self.buffer_manager.user_prompt_active.get(user_id, False):
+            return
+        
+        try:
+            # Get all accumulated transcriptions
+            transcriptions = self.buffer_manager.get_prompt_transcriptions(user_id)
+            if transcriptions:
+                # Combine all transcriptions into complete prompt
+                complete_prompt = ' '.join(transcriptions)
+                
+                # Calculate total prompt duration
+                prompt_duration = time.time() - self.buffer_manager.user_prompt_start.get(user_id, time.time())
+                
+                # Send complete prompt as a single message
+                if self.send_transcription:
+                    await self.send_transcription(user_id, complete_prompt, prompt_duration)
+                logger.info(f"🎯 Prompt completed for user {user_id} ({prompt_duration:.1f}s): {complete_prompt[:100]}...")
+            
+            # Reset prompt state
+            self.buffer_manager.clear_prompt(user_id)
+        
+        except Exception as e:
+            logger.error(f"Error finalizing prompt for user {user_id}: {e}")
