@@ -62,11 +62,6 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.processing_locks: Dict[int, bool] = {}
         self.user_overlap_buffers: Dict[int, bytes] = {}  # Store overlap audio for continuity
         self.user_last_transcription: Dict[int, str] = {}  # Store last transcription for merging
-        # Prompt mode state
-        self.user_prompt_active: Dict[int, bool] = {}  # Track if user is in prompt mode
-        self.user_prompt_start: Dict[int, float] = {}  # Track prompt start time
-        self.user_prompt_transcriptions: Dict[int, list] = {}  # Accumulate prompt transcriptions
-        self.user_prompt_finalizing: Dict[int, bool] = {}  # Track if prompt is being finalized
         
         logger.info(f"StreamingAudioSink initialized with config: {self.config}")
     
@@ -162,11 +157,10 @@ class StreamingAudioSink(discord.sinks.Sink):
             audio_array = audio_array[::resample_factor]
             sample_rate = 16000
         
-        # Aggressive silence trimming to reduce Whisper hallucinations
-        # This is critical for preventing repetitive transcriptions
+        # Basic silence trimming
         if len(audio_array) > 320:  # At least 20ms of audio
             window_size = 160  # 10ms at 16kHz
-            energy_threshold = np.max(np.abs(audio_array)) * 0.05  # 5% of max amplitude (stricter)
+            energy_threshold = np.max(np.abs(audio_array)) * 0.02  # 2% of max amplitude
             
             # Find first non-silent sample
             start_idx = 0
@@ -218,37 +212,26 @@ class StreamingAudioSink(discord.sinks.Sink):
             # Send to Whisper for transcription
             logger.info(f"Sending {duration:.2f}s audio to Whisper for user {user_id}")
             
-            # Use supported parameters to reduce Whisper hallucinations
+            # Basic transcription parameters
             transcription_params = {
                 "filename": f"stream_user_{user_id}.wav",
-                "language": "en",  # Force English to reduce hallucinations
-                "task": "transcribe",  # Explicit task
+                "language": "en",
+                "task": "transcribe"
             }
-            
-            # For very short segments, avoid sending initial_prompt which can cause hallucinations
-            if duration >= 1.0:
-                transcription_params["initial_prompt"] = ""  # Empty prompt to prevent repetitive patterns
             
             result = await self.whisper_client.transcribe_bytes(wav_data, **transcription_params)
             
             if result and result.get('text'):
                 transcribed_text = result['text'].strip()
                 if transcribed_text:
-                    # In prompt mode, accumulate raw transcriptions without merging
-                    if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False):
-                        if user_id not in self.user_prompt_transcriptions:
-                            self.user_prompt_transcriptions[user_id] = []
-                        self.user_prompt_transcriptions[user_id].append(transcribed_text)
-                        logger.info(f"📝 Accumulated prompt segment for user {user_id}: {transcribed_text}")
-                    else:
-                        # In continuous mode, merge with previous transcription to handle overlap
-                        final_text = await self.merge_transcriptions(user_id, transcribed_text)
-                        # Send transcription to Discord channel
-                        await self.send_transcription(user_id, final_text, duration)
-                        logger.info(f"✅ Transcribed for user {user_id}: {final_text}")
-                        
-                        # Store for next merge
-                        self.user_last_transcription[user_id] = transcribed_text
+                    # Simple continuous mode - merge with previous transcription to handle overlap
+                    final_text = await self.merge_transcriptions(user_id, transcribed_text)
+                    # Send transcription to Discord channel
+                    await self.send_transcription(user_id, final_text, duration)
+                    logger.info(f"✅ Transcribed for user {user_id}: {final_text}")
+                    
+                    # Store for next merge
+                    self.user_last_transcription[user_id] = transcribed_text
                 else:
                     logger.debug(f"Empty transcription result for user {user_id}")
             else:
@@ -383,25 +366,12 @@ class StreamingAudioSink(discord.sinks.Sink):
                 self.user_speech_start[user_id] = current_time
                 logger.debug(f"Speech detected for user {user_id}")
                 
-                # In prompt mode, activate prompt tracking
-                if self.config['prompt_mode']:
-                    prompt_active = self.user_prompt_active.get(user_id, False)
-                    prompt_finalizing = self.user_prompt_finalizing.get(user_id, False)
-                    logger.debug(f"Prompt mode check for user {user_id}: active={prompt_active}, finalizing={prompt_finalizing}")
-                    
-                    if not prompt_active and not prompt_finalizing:
+                # Simple prompt mode tracking (if enabled)
+                if self.config.get('prompt_mode', {}).get('enabled', False):
+                    if user_id not in self.user_prompt_active:
                         self.user_prompt_active[user_id] = True
-                        self.user_prompt_finalizing[user_id] = False
                         self.user_prompt_start[user_id] = current_time
-                        self.user_prompt_transcriptions[user_id] = []
-                        # Clear overlap buffer to prevent audio bleeding between prompts
-                        if user_id in self.user_overlap_buffers:
-                            del self.user_overlap_buffers[user_id]
-                        logger.info(f"🎙️ Prompt started for user {user_id} (overlap buffer cleared)")
-                    elif prompt_active:
-                        logger.debug(f"Continuing existing prompt for user {user_id}")
-                    else:
-                        logger.debug(f"Prompt blocked (finalizing) for user {user_id}")
+                        logger.info(f"🎙️ Prompt started for user {user_id}")
             
             # Add to buffer and update activity time
             self.user_buffers[user_id].append(audio_bytes)
@@ -421,28 +391,13 @@ class StreamingAudioSink(discord.sinks.Sink):
                     self.bot_event_loop
                 )
             
-            # In prompt mode, check for hard cap
-            if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False):
-                prompt_duration = current_time - self.user_prompt_start.get(user_id, current_time)
-                if prompt_duration >= self.config['prompt_max_duration']:
-                    # Check if we're already finalizing to prevent duplicates
-                    if not self.user_prompt_finalizing.get(user_id, False):
-                        logger.info(f"⏱️ Prompt hard cap reached for user {user_id} ({prompt_duration:.1f}s)")
-                        # Mark as finalizing BEFORE setting inactive
-                        self.user_prompt_finalizing[user_id] = True
-                        # Mark prompt as inactive to prevent multiple finalizations
-                        self.user_prompt_active[user_id] = False
-                        logger.info(f"📋 Finalizing prompt for user {user_id} with {len(self.user_prompt_transcriptions.get(user_id, []))} segments")
-                        # Process remaining buffer
-                        asyncio.run_coroutine_threadsafe(
-                            self.process_user_buffer(user_id),
-                            self.bot_event_loop
-                        )
-                        # Finalize the prompt
-                        asyncio.run_coroutine_threadsafe(
-                            self.finalize_prompt(user_id),
-                            self.bot_event_loop
-                        )
+            # Check for maximum buffer duration
+            if buffer_duration >= self.config.get('max_buffer_size', 10.0):
+                logger.debug(f"Max buffer size reached for user {user_id}, processing...")
+                asyncio.run_coroutine_threadsafe(
+                    self.process_user_buffer(user_id),
+                    self.bot_event_loop
+                )
             
             # Prevent buffer from growing too large
             if buffer_duration > self.config['max_buffer_size']:
@@ -461,9 +416,7 @@ class StreamingAudioSink(discord.sinks.Sink):
             self.user_timeout_tasks[user_id].cancel()
         
         # Start new timeout task
-        timeout_duration = (self.config['prompt_silence_timeout'] 
-                           if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False)
-                           else self.config['silence_timeout'])
+        timeout_duration = self.config.get('silence_timeout', 0.5)
         
         # Schedule the timeout handler in the bot's event loop
         future = asyncio.run_coroutine_threadsafe(
@@ -472,39 +425,6 @@ class StreamingAudioSink(discord.sinks.Sink):
         )
         self.user_timeout_tasks[user_id] = future
     
-    async def finalize_prompt(self, user_id: int):
-        """
-        Finalize a prompt by combining all accumulated transcriptions.
-        """
-        logger.info(f"🔄 finalize_prompt called for user {user_id}")
-        # Check if there are no transcriptions to finalize
-        transcriptions = self.user_prompt_transcriptions.get(user_id, [])
-        if not transcriptions:
-            logger.warning(f"⚠️ No transcriptions found for user {user_id} during finalization")
-            # Reset finalizing flag even if no transcriptions
-            self.user_prompt_finalizing[user_id] = False
-            return
-        
-        try:
-            # Combine all transcriptions into complete prompt
-            complete_prompt = ' '.join(transcriptions)
-            
-            # Calculate total prompt duration
-            prompt_duration = time.time() - self.user_prompt_start.get(user_id, time.time())
-            
-            # Send complete prompt as a single message
-            await self.send_transcription(user_id, f"[PROMPT {prompt_duration:.1f}s] {complete_prompt}", prompt_duration)
-            logger.info(f"🎯 Prompt completed for user {user_id} ({prompt_duration:.1f}s): {complete_prompt[:100]}...")
-            
-            # Reset prompt state
-            self.user_prompt_active[user_id] = False
-            self.user_prompt_finalizing[user_id] = False
-            self.user_prompt_transcriptions[user_id] = []
-            if user_id in self.user_prompt_start:
-                del self.user_prompt_start[user_id]
-        
-        except Exception as e:
-            logger.error(f"Error finalizing prompt for user {user_id}: {e}")
     
     def cleanup(self):
         """Clean up resources when sink is stopped."""
@@ -578,15 +498,6 @@ class StreamingAudioSink(discord.sinks.Sink):
                 # Process the accumulated buffer
                 logger.info(f"Processing accumulated buffer after timeout for user {user_id}")
                 await self.process_user_buffer(user_id)
-                
-                # In prompt mode, finalize the prompt
-                if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False):
-                    # Check if we're already finalizing to prevent duplicates
-                    if not self.user_prompt_finalizing.get(user_id, False):
-                        logger.info(f"📋 Finalizing prompt after timeout for user {user_id}")
-                        self.user_prompt_finalizing[user_id] = True
-                        self.user_prompt_active[user_id] = False
-                        await self.finalize_prompt(user_id)
             
             # Clean up the timeout task reference
             if user_id in self.user_timeout_tasks:
