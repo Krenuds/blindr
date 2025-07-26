@@ -1,11 +1,35 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 06:22:43
+Generated on: 2025-07-26 06:27:26
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: e235c345
+### 1. Commit: 0c5a71c9
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 06:24:48 -0400
+- **Subject:** feat: Simplify commands and add transcription toggle
+
+**Full Commit Message:**
+```
+feat: Simplify commands and add transcription toggle
+
+- Remove status, stream_info, and clear commands
+- Keep only transcribe and clearall commands
+- Convert transcribe to toggle transcription on/off globally
+- Add transcription_enabled flag to control message sending
+- Update help text to show simplified command set
+- Transcribe command shows status and available commands
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: e235c345
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:16:19 -0400
@@ -29,7 +53,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: fbfb033d
+### 3. Commit: fbfb033d
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:11:05 -0400
@@ -50,7 +74,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: e4c33840
+### 4. Commit: e4c33840
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:00:16 -0400
@@ -63,7 +87,7 @@ Update git logs
 
 ---
 
-### 4. Commit: 7065cc4e
+### 5. Commit: 7065cc4e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 05:57:16 -0400
@@ -91,45 +115,6 @@ fix: Resolve Whisper hallucination issues causing duplicate text
 - Cleaner, more natural transcription output
 
 Tested with continuous voice input and verified improvements.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: 7e6b3649
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 23:05:39 -0400
-- **Subject:** feat: Implement prompt mode for 30-second voice inputs 🎙️
-
-**Full Commit Message:**
-```
-feat: Implement prompt mode for 30-second voice inputs 🎙️
-
-## Major Changes
-✅ Added prompt mode configuration to Discord bot
-✅ Implemented 30-second hard cap for voice prompts
-✅ Extended silence timeout to 2 seconds for natural pauses
-✅ Accumulate transcriptions until prompt completion
-✅ Output combined prompt as [PROMPT X.Xs] format
-
-## Technical Implementation
-- Added prompt_mode, prompt_silence_timeout, prompt_max_duration configs
-- Track prompt state with user_prompt_active/start/transcriptions
-- Accumulate segments with 📝 indicator
-- Finalize prompts on silence timeout or hard cap
-- Prevent multiple finalizations with state management
-
-## Whisper Optimization
-- Force English language detection to reduce hallucinations
-- Add initial_prompt for better transcription context
-- Maintain existing overlap buffer strategy
-
-The bot now intelligently handles longer voice inputs up to 30 seconds,
-perfect for complex prompts that will be sent to LLMs for processing.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 

@@ -102,10 +102,24 @@ async def start_streaming(guild_id: int, channel):
                 
                 if text_channel:
                     # Get member to display name instead of tagging
-                    member = channel.guild.get_member(user_id)
-                    username = member.display_name if member else f"User {user_id}"
+                    guild = text_channel.guild
+                    member = guild.get_member(user_id)
+                    
+                    # Try multiple fallback methods to get username
+                    if member:
+                        username = member.display_name
+                    else:
+                        # Try to fetch member if not in cache
+                        try:
+                            member = await guild.fetch_member(user_id)
+                            username = member.display_name
+                        except:
+                            # Final fallback - try to get user from bot cache
+                            user = bot.get_user(user_id)
+                            username = user.display_name if user else f"User {user_id}"
+                    
                     await text_channel.send(f"🎤 {username} ({duration:.1f}s): {text}")
-                    logger.info(f"Sent transcription to Discord: {text}")
+                    logger.info(f"Sent transcription to Discord: {text} (from {username})")
             except Exception as e:
                 logger.error(f"Failed to send transcription to Discord: {e}")
         
