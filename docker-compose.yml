@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: blindr-whisper
+    ports:
+      - "9000:9000"
+    environment:
+      - ASR_MODEL=base                    # Start with base model for good balance of speed/accuracy
+      - ASR_ENGINE=openai_whisper         # Use OpenAI Whisper engine
+      - ASR_DEVICE=cpu                    # Use CPU (can change to cuda if GPU available)
+      - MODEL_IDLE_TIMEOUT=300            # Unload model after 5 minutes of inactivity
+    volumes:
+      - whisper_models:/app/models        # Persist downloaded models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  whisper_models:
+    driver: local

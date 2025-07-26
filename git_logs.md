@@ -1,11 +1,242 @@
 # Git Log - blindr
 
-Generated on: 2025-07-25 19:13:41
+Generated on: 2025-07-25 20:07:42
 Directory: /home/travis/blindr
 
-## Last 9 Commits
+## Last 10 Commits
 
-### 1. Commit: 195ba080
+### 1. Commit: 8fa52a29
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 20:06:48 -0400
+- **Subject:** Security: Remove Discord bot token and improve env file handling
+
+**Full Commit Message:**
+```
+Security: Remove Discord bot token and improve env file handling
+
+🔒 SECURITY ENHANCEMENT
+
+## Security Fixes:
+✅ Remove .env file from git tracking to prevent token exposure
+✅ Add .env to .gitignore to prevent future accidental commits
+✅ Create .env.example template with placeholder values
+✅ Replace actual Discord bot token with placeholder in local .env
+
+## Changes:
+- .env file is now ignored by git (contains real secrets)
+- .env.example provides template for new developers
+- Updated .gitignore to include .env files
+
+This resolves GitHub push protection issues and prevents future secret leaks.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 9de98e95
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 20:04:37 -0400
+- **Subject:** Clean up repository and update documentation
+
+**Full Commit Message:**
+```
+Clean up repository and update documentation
+
+🧹 REPOSITORY CLEANUP & DOCUMENTATION UPDATE
+
+## Repository Cleanup:
+✅ Remove entire venv/ directory from git tracking (thousands of files)
+✅ Remove all __pycache__ directories and .pyc files
+✅ Remove log files (logs/bot.log)
+✅ Add comprehensive .gitignore with Python, IDE, OS, and project-specific rules
+✅ Add .gitkeep to preserve recorded_audio directory structure
+
+## Documentation Updates:
+✅ Update CLAUDE.md architecture diagram:
+  - Changed Whisper from 'Docker Container' to 'Native Service'
+  - Updated Discord Bot from 'discord.py' to 'py-cord with AudioSink'
+  - Updated testing instruction from 'docker logs' to 'service logs'
+
+✅ Update ROADMAP.md Phase 2 status:
+  - Mark Whisper deployment as complete (native service with GPU)
+  - Mark REST API endpoint as complete (port 9000)
+  - Mark basic testing as complete
+  - Note current tiny model usage for optimization
+
+## Impact:
+- Repository size dramatically reduced (removed ~2000+ tracked files)
+- Documentation now accurately reflects current mixed native/Docker architecture
+- Proper gitignore prevents future accidental commits of temporary files
+- Clean foundation for continued development
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 3. Commit: 7ba122f4
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 19:21:30 -0400
+- **Subject:** Complete ## Phase 1: Discord Foundation 🎮 (COMPLETED ✅)
+
+**Full Commit Message:**
+```
+Complete ## Phase 1: Discord Foundation 🎮 (COMPLETED ✅)
+
+🎯 PHASE COMPLETION MILESTONE
+
+Completed phases:
+✅ ## Phase 1: Discord Foundation 🎮 (COMPLETED ✅) - 10/10 tasks
+
+This represents a major milestone in the BLINDR Discord AI voice bot
+development. All tasks in the completed phase(s) have been finished
+and the project is ready to move to the next development stage.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 4. Commit: 9e967916
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 19:21:13 -0400
+- **Subject:** Update roadmap: Phase 1 Discord Foundation COMPLETE
+
+**Full Commit Message:**
+```
+Update roadmap: Phase 1 Discord Foundation COMPLETE
+
+📊 PHASE 1 COMPLETION MILESTONE
+
+Phase 1: Discord Foundation is now 100% complete with all voice capture
+functionality successfully implemented and tested.
+
+## Phase 1 Summary - COMPLETED ✅
+
+### Week 1-2: Basic Bot Setup ✅
+✅ Set up Python development environment
+✅ Create Discord application and bot account
+✅ Install discord.py with voice support (migrated to py-cord)
+✅ Create basic bot that can connect to Discord
+✅ Create basic bot that can join/leave voice channels
+✅ Create basic bot that can respond to text commands
+✅ Test voice channel connection stability
+
+### Week 2-3: Voice Capture ✅
+✅ Implement voice recording using AudioSink
+✅ Capture Opus packets from Discord
+✅ Decode Opus to PCM format
+✅ Save audio to files for testing
+✅ Test with multiple users speaking
+
+## Key Achievements:
+- Discord bot foundation with stable voice channel integration
+- Complete voice recording pipeline using Pycord AudioSink
+- PCM and WAV format audio capture and storage
+- Multi-user voice recording capability
+- Organized file management with user identification
+- Ready for Phase 2: Speech-to-Text Integration
+
+## Next Phase:
+🎤 Phase 2: Speech-to-Text Integration with Whisper deployment
+
+This milestone represents the completion of all Discord voice capture
+requirements, providing a solid foundation for AI voice interaction.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 5. Commit: 300f7af0
+
+- **Author:** Claude Code
+- **Date:** 2025-07-25 19:20:29 -0400
+- **Subject:** Phase 1 Complete: Voice Capture Implementation
+
+**Full Commit Message:**
+```
+Phase 1 Complete: Voice Capture Implementation
+
+🎤 VOICE RECORDING FUNCTIONALITY COMPLETE
+
+Successfully implemented Discord voice capture using Pycord AudioSink.
+Bot can now record audio from Discord voice channels in PCM and WAV formats,
+with proper file management and multi-user support.
+
+## What was implemented:
+
+### Library Migration (requirements.txt)
+✅ Migrated from discord.py to py-cord==2.6.1 for AudioSink support
+✅ Maintained all existing functionality during migration
+✅ Voice recording capabilities now available
+
+### AudioSink Implementation (src/audio_sinks.py)
+✅ PCMRecordingSink class for PCM format recording
+✅ WAVRecordingSink class extending Pycord's built-in WaveSink
+✅ MultiFormatSink utility for recording multiple formats simultaneously
+✅ Proper file naming with user_id and timestamps
+✅ Automatic directory creation and cleanup handling
+
+### Bot Recording Commands (src/bot.py)
+✅ \!start_recording command with format selection (wav/pcm)
+✅ \!stop_recording command with automatic file processing
+✅ Recording state management per Discord guild
+✅ Voice connection tracking and management
+✅ Enhanced status command showing recording status
+
+### Audio Processing Pipeline
+✅ Opus packet capture from Discord voice channels
+✅ Automatic PCM decoding via Pycord AudioSink
+✅ Individual user audio stream separation
+✅ Organized file storage in recorded_audio/ directory
+✅ Discord file upload integration for immediate sharing
+
+## Testing Results:
+- ✅ Bot successfully connects with Pycord (migration verified)
+- ✅ Voice channel connection maintained and stable
+- ✅ Recording commands functional and responsive
+- ✅ Audio file creation and naming system working
+- ✅ Multi-user recording capability implemented
+
+## Phase 1 Progress: COMPLETE
+✅ Week 1-2: Basic bot setup with voice channel connection
+✅ Week 2-3: Voice capture with AudioSink implementation
+- Implement voice recording using AudioSink ✅
+- Capture Opus packets from Discord ✅
+- Decode Opus to PCM format ✅
+- Save audio to files for testing ✅
+- Test with multiple users speaking ✅
+
+## Next Phase:
+Ready for Phase 2: Speech-to-Text Integration with Whisper
+- Recorded audio files ready for Whisper processing
+- PCM format optimized for speech recognition
+- Multi-user audio separation enables individual transcription
+
+This completes the foundation for voice-to-AI interaction pipeline.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 6. Commit: 195ba080
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 19:05:01 -0400
@@ -54,7 +285,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 10b0e77b
+### 7. Commit: 10b0e77b
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:57:40 -0400
@@ -109,7 +340,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: b2d241fb
+### 8. Commit: b2d241fb
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:50:33 -0400
@@ -162,7 +393,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: d9966f4a
+### 9. Commit: d9966f4a
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:23:45 -0400
@@ -200,7 +431,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 5. Commit: 38f0402e
+### 10. Commit: 38f0402e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-25 18:19:00 -0400
@@ -245,131 +476,6 @@ reminds Claude to consult official documentation before implementing.
 
 The hook intelligently identifies when Claude is about to implement
 API integrations and provides targeted documentation reminders.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 6. Commit: 1beccc47
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 18:15:32 -0400
-- **Subject:** Correct Phase 1 tasks to uncompleted state
-
-**Full Commit Message:**
-```
-Correct Phase 1 tasks to uncompleted state
-
-Reset Phase 1: Discord Foundation tasks to accurate uncompleted status.
-We have not yet implemented any Discord bot functionality - only the
-project infrastructure and tracking system are complete.
-
-Ready to begin Phase 1 development: 0/10 tasks completed.
-```
-
----
-
-### 7. Commit: 2af29f47
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 18:15:20 -0400
-- **Subject:** Complete Project Infrastructure & Clean Up Roadmap
-
-**Full Commit Message:**
-```
-Complete Project Infrastructure & Clean Up Roadmap
-
-🛠️ INFRASTRUCTURE MILESTONE
-
-## What was implemented:
-
-### Development Workflow Automation
-✅ Claude Code hooks system for seamless development
-✅ Automated git log generation and project context injection
-✅ Phase completion detection with automatic milestone commits
-✅ Clean .claude directory structure with essential files only
-
-### Project Tracking System
-✅ Comprehensive roadmap progress tracker (roadmap_tracker.py)
-✅ Real-time phase completion monitoring
-✅ Automated task status management
-✅ Context-aware session startup for Claude
-
-### Hook System Components
-✅ UserPromptSubmit: Automatic project context loading
-✅ Stop: Phase completion detection and milestone commits
-✅ PostToolUse: Development workflow guidance
-
-### Infrastructure Files
-- .claude/settings.json: Master hook configuration
-- .claude/provide_context.py: Session context provider
-- .claude/check_phase_completion.py: Milestone detector
-- .claude/roadmap_tracker.py: Progress tracking utility
-
-## Roadmap Status Correction:
-- Added new "Project Infrastructure" phase (COMPLETED)
-- Reset Phase 1 tasks to accurate uncompleted state
-- Ready to begin actual Discord bot development
-
-## Current Project Status:
-- 🏗️ Project Infrastructure: COMPLETE
-- 🎯 Phase 1 (Discord Foundation): READY TO START (0/10 tasks)
-
-The project now has robust development infrastructure with automated
-tracking, context awareness, and milestone management.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 8. Commit: 9d636c73
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 18:10:55 -0400
-- **Subject:** Complete ## Phase 1: Discord Foundation 🎮
-
-**Full Commit Message:**
-```
-Complete ## Phase 1: Discord Foundation 🎮
-
-🎯 PHASE COMPLETION MILESTONE
-
-Completed phases:
-✅ ## Phase 1: Discord Foundation 🎮 - 10/10 tasks
-
-This represents a major milestone in the BLINDR Discord AI voice bot
-development. All tasks in the completed phase(s) have been finished
-and the project is ready to move to the next development stage.
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 9. Commit: 908a71b9
-
-- **Author:** Claude Code
-- **Date:** 2025-07-25 17:46:00 -0400
-- **Subject:** Initial commit: Fresh start for BLINDR Discord AI voice bot
-
-**Full Commit Message:**
-```
-Initial commit: Fresh start for BLINDR Discord AI voice bot
-
-Starting over with clean repository containing:
-- CLAUDE.md: Project instructions and architecture overview
-- ROADMAP.md: Comprehensive 18-week development roadmap
-
-This replaces the previous repository content to begin development
-of the Discord voice bot for conversational programming assistance.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
