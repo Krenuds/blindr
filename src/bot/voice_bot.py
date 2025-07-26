@@ -273,6 +273,12 @@ class VoiceBot:
 
     def run(self):
         """Start the Discord bot."""
+        # Clear logs on startup
+        log_file = os.getenv("LOG_FILE", "logs/bot.log")
+        if os.path.exists(log_file):
+            open(log_file, 'w').close()
+            logger.info("Log file cleared on startup")
+        
         token = os.getenv("DISCORD_BOT_TOKEN")
         if not token:
             logger.error("DISCORD_BOT_TOKEN not found in environment variables")

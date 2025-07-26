@@ -1,11 +1,85 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 12:21:00
+Generated on: 2025-07-26 13:07:30
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: c422b35e
+### 1. Commit: edae4eb8
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 12:21:32 -0400
+- **Subject:** refactor: Reorganize codebase into domain-based packages - NEEDS TESTING ⚠️
+
+**Full Commit Message:**
+```
+refactor: Reorganize codebase into domain-based packages - NEEDS TESTING ⚠️
+
+## Major Structural Reorganization
+Applied domain-driven design principles to create clean package structure,
+but this is a significant change that likely introduced bugs and needs thorough testing.
+
+## New Package Structure:
+```
+src/
+├── bot/                     # Discord voice bot domain
+│   ├── voice_bot.py        # Main Discord bot class (was bot.py)
+│   └── audio_processing.py # Audio components (was streaming_audio_sink.py)
+├── whisper/                # Speech-to-text domain
+│   ├── client.py           # HTTP client (was whisper_client.py)
+│   └── service.py          # FastAPI service (was whisper_service.py)
+├── config/                 # Configuration domain
+│   └── loader.py           # Config utilities (was config_loader.py)
+└── main.py                 # Entry point
+```
+
+## Import Pattern Changes:
+**Before:**
+```python
+from streaming_audio_sink import StreamingAudioSink
+from whisper_client import WhisperClient
+from config_loader import get_streaming_config
+```
+
+**After:**
+```python
+from bot import StreamingAudioSink
+from whisper import WhisperClient
+from config import get_streaming_config
+```
+
+## Clean Package APIs:
+Each package has __init__.py with explicit exports to prevent import confusion.
+
+## ⚠️ TESTING REQUIRED:
+- Basic import test passed with virtual environment
+- GPU Whisper service loads correctly
+- BUT: Likely bugs in relative imports, missing dependencies, path issues
+- Bot functionality needs full integration testing
+- Voice pipeline may have broken connections
+
+## Benefits (if it works):
+- Clean domain boundaries for Phase 3 LLM integration
+- Shorter, more intuitive import paths
+- Easier to add new packages (llm/, tts/, etc.)
+- Better code organization and maintainability
+
+## Usage:
+```bash
+source venv/bin/activate
+python run_bot.py
+```
+
+This reorganization was done comprehensively but needs debugging before use.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: c422b35e
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 11:56:10 -0400
@@ -65,7 +139,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: a2e9d323
+### 3. Commit: a2e9d323
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 11:46:39 -0400
@@ -78,7 +152,7 @@ cleanup: Remove accidentally created remove_comments.py script
 
 ---
 
-### 3. Commit: 3d91b159
+### 4. Commit: 3d91b159
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 11:46:29 -0400
@@ -172,7 +246,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: fdc6eaa1
+### 5. Commit: fdc6eaa1
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 11:35:28 -0400
@@ -233,41 +307,6 @@ VoiceBot class structure:
 - Clean foundation for LLM integration
 - Modular structure for easy feature additions
 - Clear separation makes testing individual components easier
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: bb4e586b
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 11:27:35 -0400
-- **Subject:** cleanup: Remove unused vad_processor.py
-
-**Full Commit Message:**
-```
-cleanup: Remove unused vad_processor.py
-
-## Cleanup Action
-Removed obsolete VAD processor implementation that was replaced
-by the "Trust Discord VAD" approach in Phase 2.
-
-## Removed Files:
-- src/vad_processor.py (251 lines of unused code)
-- src/__pycache__/vad_processor.cpython-312.pyc
-
-## Analysis Findings:
-- No references to vad_processor found in codebase
-- Previous energy-based VAD approach failed and was superseded
-- Current timeout-based approach with Discord VAD is working well
-
-## Impact:
-- Reduces codebase complexity by removing obsolete components
-- Prepares clean foundation for Phase 3 LLM integration
-- No functional changes to working voice-to-text pipeline
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
