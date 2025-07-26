@@ -23,13 +23,14 @@ DiscordServer -->|"📡 Opus Packets<br/>48kHz"| Bot
 Bot -->|"🎵 PCM/WAV Audio"| Whisper
 Whisper -->|"📝 Transcribed Text"| Bot
 
-Bot -->|"❓ User Query"| Classifier
-Classifier -->|"🏷️ Intent Classification<br/>(conversational/agentic)"| LangChain
+Bot -->|"❓ User Query"| DistilBERT
+DistilBERT -->|"🏷️ Intent Classification<br/>(conversational/code/agent)"| LangChain
 LangChain -->|"📝 Prompt + Context"| LiteLLM
 
 LiteLLM -->|"🚦 Routed Request"| Ollama
 Ollama -->|"💭 Conversational Route"| Llama
-Ollama -->|"🛠️ Agentic Route"| Qwen
+Ollama -->|"💻 Code Questions"| Qwen
+Ollama -->|"🛠️ Agent Route"| Qwen
 
 Llama -->|"💬 Response Text"| Ollama
 Qwen -->|"📋 Response Text"| Ollama
@@ -55,9 +56,9 @@ src/
 │   └── service.py          # FastAPI service
 ├── llm/                    # LLM integration domain
 │   ├── client.py           # LiteLLM client for model routing
-│   ├── classifier.py       # DistilBERT intent classification
+│   ├── classifier.py       # DistilBERT 3-way intent classification
 │   └── chains.py           # LangChain prompt templates and chains
-├── tts/                    # Text-to-speech domain (future)
+├── piper/                  # Text-to-speech domain (future)
 │   ├── client.py           # Piper TTS client
 │   └── service.py          # TTS processing
 ├── config/                 # Configuration domain
