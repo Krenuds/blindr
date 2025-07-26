@@ -57,6 +57,8 @@ class StreamingAudioSink(discord.sinks.Sink):
         self.user_buffers: Dict[int, deque] = {}
         self.user_last_activity: Dict[int, float] = {}
         self.user_speech_start: Dict[int, float] = {}
+        self.user_last_packet_time: Dict[int, float] = {}  # Track last packet time for timeout detection
+        self.user_timeout_tasks: Dict[int, asyncio.Task] = {}  # Background tasks for timeout detection
         self.processing_locks: Dict[int, bool] = {}
         self.user_overlap_buffers: Dict[int, bytes] = {}  # Store overlap audio for continuity
         self.user_last_transcription: Dict[int, str] = {}  # Store last transcription for merging
@@ -365,6 +367,7 @@ class StreamingAudioSink(discord.sinks.Sink):
         if user_id not in self.user_buffers:
             self.user_buffers[user_id] = deque()
             self.user_last_activity[user_id] = current_time
+            self.user_last_packet_time[user_id] = current_time
             self.processing_locks[user_id] = False
             logger.info(f"Started streaming for user {user_id}")
         
@@ -440,45 +443,24 @@ class StreamingAudioSink(discord.sinks.Sink):
                     buffer_duration = total_samples / self.config['sample_rate']
                 logger.debug(f"Trimmed buffer for user {user_id} to {buffer_duration:.2f}s")
         
-        else:
-            # Silence detected - check if we should process accumulated speech
-            if (user_id in self.user_speech_start and 
-                user_id in self.user_buffers and 
-                len(self.user_buffers[user_id]) > 0):
-                
-                # Calculate silence duration
-                last_activity = self.user_last_activity.get(user_id, current_time)
-                silence_duration = current_time - last_activity
-                
-                # Use appropriate silence timeout based on mode
-                silence_timeout = (self.config['prompt_silence_timeout'] 
-                                 if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False)
-                                 else self.config['silence_timeout'])
-                
-                # Process buffer if silence timeout reached
-                if silence_duration >= silence_timeout:
-                    buffer = self.user_buffers[user_id]
-                    total_samples = sum(len(chunk) for chunk in buffer) // 2
-                    buffer_duration = total_samples / self.config['sample_rate']
-                    
-                    logger.debug(f"Silence timeout for user {user_id}, processing {buffer_duration:.2f}s buffer")
-                    
-                    # Use run_coroutine_threadsafe to process in the bot's event loop
-                    asyncio.run_coroutine_threadsafe(
-                        self.process_user_buffer(user_id),
-                        self.bot_event_loop
-                    )
-                    
-                    # In prompt mode, check if prompt is complete
-                    if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False):
-                        # Check if we're already finalizing to prevent duplicates
-                        if not self.user_prompt_finalizing.get(user_id, False):
-                            self.user_prompt_finalizing[user_id] = True
-                            self.user_prompt_active[user_id] = False
-                            asyncio.run_coroutine_threadsafe(
-                                self.finalize_prompt(user_id),
-                                self.bot_event_loop
-                            )
+        # Update last packet time and start/restart timeout task
+        self.user_last_packet_time[user_id] = current_time
+        
+        # Cancel existing timeout task if any
+        if user_id in self.user_timeout_tasks:
+            self.user_timeout_tasks[user_id].cancel()
+        
+        # Start new timeout task
+        timeout_duration = (self.config['prompt_silence_timeout'] 
+                           if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False)
+                           else self.config['silence_timeout'])
+        
+        # Schedule the timeout handler in the bot's event loop
+        future = asyncio.run_coroutine_threadsafe(
+            self.timeout_handler(user_id, timeout_duration),
+            self.bot_event_loop
+        )
+        self.user_timeout_tasks[user_id] = future
     
     async def finalize_prompt(self, user_id: int):
         """
@@ -567,3 +549,69 @@ class StreamingAudioSink(discord.sinks.Sink):
             }
         
         return status
+    
+    async def timeout_handler(self, user_id: int, timeout_duration: float):
+        """
+        Handle speech timeout for a user.
+        Called after silence timeout to process accumulated audio.
+        """
+        try:
+            # Wait for the timeout duration
+            await asyncio.sleep(timeout_duration)
+            
+            logger.info(f"⏰ Speech timeout ({timeout_duration:.1f}s) reached for user {user_id}")
+            
+            # Check if user still has audio to process
+            if (user_id in self.user_buffers and 
+                len(self.user_buffers[user_id]) > 0):
+                
+                # Process the accumulated buffer
+                logger.info(f"Processing accumulated buffer after timeout for user {user_id}")
+                await self.process_user_buffer(user_id)
+                
+                # In prompt mode, finalize the prompt
+                if self.config['prompt_mode'] and self.user_prompt_active.get(user_id, False):
+                    # Check if we're already finalizing to prevent duplicates
+                    if not self.user_prompt_finalizing.get(user_id, False):
+                        logger.info(f"📋 Finalizing prompt after timeout for user {user_id}")
+                        self.user_prompt_finalizing[user_id] = True
+                        self.user_prompt_active[user_id] = False
+                        await self.finalize_prompt(user_id)
+            
+            # Clean up the timeout task reference
+            if user_id in self.user_timeout_tasks:
+                del self.user_timeout_tasks[user_id]
+                
+        except asyncio.CancelledError:
+            # Task was cancelled (new speech detected), this is normal
+            logger.debug(f"Timeout task cancelled for user {user_id} (new speech detected)")
+        except Exception as e:
+            logger.error(f"Error in timeout handler for user {user_id}: {e}")
+    
+    async def finalize_prompt(self, user_id: int):
+        """
+        Finalize a prompt by combining all accumulated transcriptions.
+        """
+        logger.info(f"🔄 finalize_prompt called for user {user_id}")
+        # Check if there are no transcriptions to finalize
+        transcriptions = self.user_prompt_transcriptions.get(user_id, [])
+        if not transcriptions:
+            logger.warning(f"⚠️ No transcriptions found for user {user_id} during finalization")
+            # Reset finalizing flag even if no transcriptions
+            self.user_prompt_finalizing[user_id] = False
+            return
+        
+        # Combine all transcriptions into one prompt
+        combined_text = " ".join(transcriptions)
+        prompt_start_time = self.user_prompt_start.get(user_id, time.time())
+        prompt_duration = time.time() - prompt_start_time
+        
+        # Send the combined prompt
+        await self.send_transcription(user_id, f"[PROMPT {prompt_duration:.1f}s] {combined_text}", prompt_duration)
+        logger.info(f"🎯 Prompt completed for user {user_id} ({prompt_duration:.1f}s): {combined_text[:100]}...")
+        
+        # Clean up prompt state
+        self.user_prompt_transcriptions[user_id] = []
+        self.user_prompt_finalizing[user_id] = False
+        if user_id in self.user_prompt_start:
+            del self.user_prompt_start[user_id]

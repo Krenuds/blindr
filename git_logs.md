@@ -1,11 +1,35 @@
 # Git Log - blindr
 
-Generated on: 2025-07-26 06:38:46
+Generated on: 2025-07-26 06:47:03
 Directory: /home/travis/blindr
 
 ## Last 5 Commits
 
-### 1. Commit: 82c8ee89
+### 1. Commit: e432e0ac
+
+- **Author:** Claude Code
+- **Date:** 2025-07-26 06:39:04 -0400
+- **Subject:** feat: Add members intent for efficient username resolution
+
+**Full Commit Message:**
+```
+feat: Add members intent for efficient username resolution
+
+- Add intents.members = True to bot configuration
+- This enables access to Discord's member cache for fast username lookup
+- Now uses guild.get_member() (cached) instead of guild.fetch_member() (API call)
+- Significantly improves performance of transcription username display
+
+Thanks to Discord API documentation for identifying the missing intent\!
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+### 2. Commit: 82c8ee89
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:28:08 -0400
@@ -29,7 +53,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit: 0c5a71c9
+### 3. Commit: 0c5a71c9
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:24:48 -0400
@@ -53,7 +77,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 3. Commit: e235c345
+### 4. Commit: e235c345
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:16:19 -0400
@@ -77,7 +101,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 4. Commit: fbfb033d
+### 5. Commit: fbfb033d
 
 - **Author:** Claude Code
 - **Date:** 2025-07-26 06:11:05 -0400
@@ -94,19 +118,6 @@ feat: Add !clear command and remove Discord mentions from transcriptions
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
----
-
-### 5. Commit: e4c33840
-
-- **Author:** Claude Code
-- **Date:** 2025-07-26 06:00:16 -0400
-- **Subject:** Update git logs
-
-**Full Commit Message:**
-```
-Update git logs
 ```
 
 ---
