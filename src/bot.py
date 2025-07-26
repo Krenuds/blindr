@@ -64,7 +64,17 @@ async def start_streaming(guild_id: int, channel):
         # Create streaming sink with custom transcription handler
         # Pass the bot's event loop for cross-thread communication
         bot_event_loop = asyncio.get_event_loop()
-        streaming_sink = StreamingAudioSink(whisper_client, bot_event_loop)
+        
+        # Configure for prompt mode
+        config = {
+            'prompt_mode': True,              # Enable prompt mode
+            'prompt_silence_timeout': 2.0,    # 2 seconds of silence to end prompt
+            'prompt_max_duration': 30.0,      # 30 second hard cap
+            'buffer_duration': 5.0,           # Keep 5s buffers
+            'silence_timeout': 0.5,           # Fast response for conversation mode
+        }
+        
+        streaming_sink = StreamingAudioSink(whisper_client, bot_event_loop, config)
         
         # Override the send_transcription method to send to Discord
         async def send_transcription_to_discord(user_id: int, text: str, duration: float):
@@ -99,7 +109,11 @@ async def start_streaming(guild_id: int, channel):
         
         # Start streaming
         voice_client = connections[guild_id]
-        voice_client.start_recording(streaming_sink, lambda *args: None)  # Empty callback since we handle transcriptions internally
+        # Create an async callback that does nothing (required by discord.py)
+        async def empty_callback(*args):
+            pass
+        
+        voice_client.start_recording(streaming_sink, empty_callback)
         
         logger.info(f"Started continuous streaming for guild {guild_id}")
         
